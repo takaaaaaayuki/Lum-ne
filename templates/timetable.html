@@ -1,0 +1,1079 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大学講義の時間割 | Lum!na</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- 追加CSS読み込み -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* 全体のスタイル */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+      background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+      color: #1f2239;
+      min-height: 100vh;
+    }
+    
+    /* ヘッダースタイル */
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: rgba(31, 34, 57, 0.95);
+      color: white;
+      height: 60px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      position: relative;
+      padding-left: 15px;
+      transition: all 0.3s ease;
+    }
+    
+    .logo:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background-color: #dd999e;
+      border-radius: 2px;
+    }
+    
+    /* ハンバーガーメニューアイコン */
+    .menu-icon {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30px;
+      height: 21px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon span {
+      height: 3px;
+      width: 100%;
+      background-color: white;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon:hover span:nth-child(1) {
+      transform: translateY(-2px);
+    }
+    
+    .menu-icon:hover span:nth-child(3) {
+      transform: translateY(2px);
+    }
+    
+    .menu-icon.active span:nth-child(1) {
+      transform: translateY(9px) rotate(45deg);
+    }
+    
+    .menu-icon.active span:nth-child(2) {
+      opacity: 0;
+    }
+    
+    .menu-icon.active span:nth-child(3) {
+      transform: translateY(-9px) rotate(-45deg);
+    }
+    
+    /* 右側メニュー */
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+      color: white;
+      padding-top: 60px;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .side-menu.active {
+      transform: translateX(0);
+    }
+    
+    .side-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .side-menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .side-menu a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 15px 20px 15px 35px;
+      font-size: 1rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      background-color: #dd999e;
+      border-radius: 50%;
+      transform: translateY(-50%) scale(0);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:hover {
+      background-color: rgba(221, 153, 158, 0.1);
+      padding-left: 40px;
+    }
+    
+    .side-menu a:hover:before {
+      transform: translateY(-50%) scale(1);
+      opacity: 1;
+    }
+    
+    /* オーバーレイ */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .overlay.active {
+      display: block;
+      opacity: 1;
+    }
+    
+    /* TIMETABLE専用のスタイル */
+    .page-title-area {
+      text-align: center;
+      padding: 2rem 1rem;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    
+    .page-title-area h1 {
+      font-size: 2.2rem;
+      margin: 0 0 0.5rem;
+      color: #f2f5f8;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      position: relative;
+      display: inline-block;
+    }
+    
+    .page-title-area h1:after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      width: 60px;
+      height: 3px;
+      background-color: #dd999e;
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+    
+    .page-title-area p {
+      color: #f2f5f8;
+      max-width: 600px;
+      margin: 1rem auto 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .timetable-container {
+      max-width: 900px;
+      margin: 0 auto 3rem;
+      padding: 1.5rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      color: #1f2239;
+      backdrop-filter: blur(5px);
+      -webkit-backdrop-filter: blur(5px);
+      transition: all 0.3s ease;
+      transform: translateY(0);
+    }
+    
+    .timetable-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+    }
+    
+    .timetable-grid {
+      display: grid;
+      /* 1列目は「時限」、その後6列（「月」～「土」） → 合計7列 */
+      grid-template-columns: repeat(7, 1fr);
+      gap: 2px;
+      background-color: rgba(200, 200, 200, 0.5);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 3px 15px rgba(0, 0, 0, 0.05);
+    }
+    
+    .timetable-grid > div {
+      background-color: #f8f9fa;
+      padding: 0.8rem;
+      min-height: 80px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      transition: all 0.2s ease;
+    }
+    
+    .timetable-header {
+      background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+      color: #ffffff;
+      font-weight: bold;
+      min-height: 50px !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      font-size: 1.1rem;
+    }
+    
+    .timetable-time {
+      background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+      color: #ffffff;
+      text-align: center;
+      font-weight: bold;
+      min-height: 50px !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+    
+    .timetable-cell {
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .timetable-cell:hover {
+      background-color: #f2f2f2;
+      transform: scale(1.02);
+      z-index: 2;
+    }
+    
+    .timetable-cell:after {
+      content: '+';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 1.5rem;
+      color: #ddd;
+      opacity: 0.5;
+      transition: opacity 0.3s ease;
+    }
+    
+    .timetable-cell:hover:after {
+      opacity: 0;
+    }
+    
+    .lecture-card {
+      width: 100%;
+      height: 100%;
+      background-color: #fff;
+      color: #1f2239;
+      border-radius: 6px;
+      padding: 0.6rem;
+      text-align: left;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-left: 4px solid #dd999e;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+    
+    .lecture-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    .lecture-title {
+      font-weight: bold;
+      margin-bottom: 0.3rem;
+      font-size: 0.95rem;
+    }
+    
+    .lecture-room {
+      font-size: 0.85rem;
+      color: #666;
+      display: flex;
+      align-items: center;
+    }
+    
+    .lecture-room i {
+      margin-right: 5px;
+      color: #dd999e;
+      font-size: 0.8rem;
+    }
+    
+    /* モーダルウィンドウ */
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0, 0, 0, 0.6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal.active {
+      opacity: 1;
+    }
+    
+    .modal-content {
+      background-color: #fff;
+      margin: 10% auto;
+      padding: 1.5rem;
+      border: 1px solid #e0e0e0;
+      width: 90%;
+      max-width: 400px;
+      border-radius: 12px;
+      z-index: 10000;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.2);
+      transform: translateY(20px);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .modal.active .modal-content {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    
+    .modal-content h2 {
+      margin-bottom: 1.2rem;
+      color: #1f2239;
+      font-size: 1.5rem;
+      text-align: center;
+      position: relative;
+      padding-bottom: 0.8rem;
+    }
+    
+    .modal-content h2:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 50px;
+      height: 3px;
+      background-color: #dd999e;
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+    
+    .modal-content label {
+      display: block;
+      margin-top: 0.8rem;
+      font-weight: 600;
+      color: #444;
+      font-size: 0.95rem;
+    }
+    
+    .modal-content input[type="text"],
+    .modal-content select {
+      width: 100%;
+      padding: 0.8rem;
+      margin-top: 0.4rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+    
+    .modal-content input[type="text"]:focus,
+    .modal-content select:focus {
+      border-color: #dd999e;
+      box-shadow: 0 0 0 3px rgba(221, 153, 158, 0.2);
+      outline: none;
+    }
+    
+    .modal-content .button-group {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1.5rem;
+    }
+    
+    .modal-content button {
+      padding: 0.7rem 1.2rem;
+      background-color: #dd999e;
+      color: #f2f5f8;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    }
+    
+    .modal-content button:hover {
+      background-color: #c7878c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .modal-content button.cancel-btn {
+      background-color: transparent;
+      border: 1px solid #dd999e;
+      color: #dd999e;
+    }
+    
+    .modal-content button.cancel-btn:hover {
+      background-color: rgba(221, 153, 158, 0.1);
+    }
+    
+    .modal .close {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      color: #aaa;
+      font-size: 1.8rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      width: 30px;
+      height: 30px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+    }
+    
+    .modal .close:hover {
+      color: #1f2239;
+      background-color: #f5f5f5;
+    }
+    
+    /* カラーピッカー */
+    .color-options {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 0.5rem;
+    }
+    
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: 2px solid transparent;
+    }
+    
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-option.selected {
+      border-color: #1f2239;
+      transform: scale(1.1);
+    }
+    
+    /* 全体保存ボタン */
+    .action-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 1.5rem auto;
+    }
+    
+    .btn {
+      padding: 0.8rem 1.5rem;
+      background-color: #dd999e;
+      color: #f2f5f8;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .btn i {
+      margin-right: 8px;
+    }
+    
+    .btn:hover {
+      background-color: #c7878c;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .btn-outline {
+      background-color: transparent;
+      border: 1px solid #dd999e;
+      color: #f2f5f8;
+    }
+    
+    .btn-outline:hover {
+      background-color: rgba(221, 153, 158, 0.2);
+    }
+    
+    /* アニメーション */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .fade-in.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .delay-1 {
+      transition-delay: 0.1s;
+    }
+    
+    .delay-2 {
+      transition-delay: 0.2s;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+      .page-title-area h1 {
+        font-size: 1.8rem;
+      }
+      
+      .page-title-area p {
+        font-size: 1rem;
+      }
+      
+      .timetable-grid {
+        font-size: 0.85rem;
+      }
+      
+      .timetable-grid > div {
+        padding: 0.5rem;
+        min-height: 60px;
+      }
+      
+      .timetable-header, .timetable-time {
+        min-height: 40px !important;
+        font-size: 0.9rem;
+      }
+      
+      .lecture-title {
+        font-size: 0.8rem;
+      }
+      
+      .lecture-room {
+        font-size: 0.7rem;
+      }
+      
+      .side-menu {
+        width: 70%;
+      }
+      
+      .modal-content {
+        margin: 15% auto;
+        padding: 1.2rem;
+      }
+    }
+    
+    @media (max-width: 480px) {
+      .timetable-container {
+        padding: 1rem;
+      }
+      
+      .timetable-grid {
+        gap: 1px;
+      }
+      
+      .timetable-grid > div {
+        padding: 0.3rem;
+        min-height: 50px;
+      }
+      
+      .lecture-card {
+        padding: 0.4rem;
+      }
+      
+      .action-buttons {
+        flex-direction: column;
+      }
+      
+      .action-buttons .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダーエリア -->
+  <header class="site-header">
+    <div class="logo">Lum!na</div>
+    <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <!-- オーバーレイ -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- 右側メニュー -->
+  <nav id="sideMenu" class="side-menu">
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+      <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+      <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+      <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+      <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+      <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+      <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+      <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+    </ul>
+  </nav>
+  
+  <!-- ページタイトルエリア -->
+  <div class="page-title-area fade-in">
+    <h1>大学講義の時間割</h1>
+    <p>履修中の講義を一目で確認・編集できます。セルをクリックして講義を追加または編集してください。</p>
+  </div>
+  
+  <!-- 時間割コンテナ -->
+  <main class="timetable-container fade-in delay-1">
+    <div class="timetable-grid">
+      <!-- ヘッダー行：1列目「時限」、その後曜日ヘッダー（月～土） -->
+      <div class="timetable-header">時限</div>
+      <div class="timetable-header">月</div>
+      <div class="timetable-header">火</div>
+      <div class="timetable-header">水</div>
+      <div class="timetable-header">木</div>
+      <div class="timetable-header">金</div>
+      <div class="timetable-header">土</div>
+      
+      <!-- 各行は1限～7限 -->
+      <!-- 1限 -->
+      <div class="timetable-time">1限</div>
+      <div id="cell_1_月" class="timetable-cell" onclick="openModal('cell_1_月', '', '', '')"></div>
+      <div id="cell_1_火" class="timetable-cell" onclick="openModal('cell_1_火', '', '', '')"></div>
+      <div id="cell_1_水" class="timetable-cell" onclick="openModal('cell_1_水', '', '', '')"></div>
+      <div id="cell_1_木" class="timetable-cell" onclick="openModal('cell_1_木', '', '', '')"></div>
+      <div id="cell_1_金" class="timetable-cell" onclick="openModal('cell_1_金', '', '', '')"></div>
+      <div id="cell_1_土" class="timetable-cell" onclick="openModal('cell_1_土', '', '', '')"></div>
+      
+      <!-- 2限 -->
+      <div class="timetable-time">2限</div>
+      <div id="cell_2_月" class="timetable-cell" onclick="openModal('cell_2_月', '', '', '')"></div>
+      <div id="cell_2_火" class="timetable-cell" onclick="openModal('cell_2_火', '', '', '')"></div>
+      <div id="cell_2_水" class="timetable-cell" onclick="openModal('cell_2_水', '', '', '')"></div>
+      <div id="cell_2_木" class="timetable-cell" onclick="openModal('cell_2_木', '', '', '')"></div>
+      <div id="cell_2_金" class="timetable-cell" onclick="openModal('cell_2_金', '', '', '')"></div>
+      <div id="cell_2_土" class="timetable-cell" onclick="openModal('cell_2_土', '', '', '')"></div>
+      
+      <!-- 3限 -->
+      <div class="timetable-time">3限</div>
+      <div id="cell_3_月" class="timetable-cell" onclick="openModal('cell_3_月', '', '', '')"></div>
+      <div id="cell_3_火" class="timetable-cell" onclick="openModal('cell_3_火', '', '', '')"></div>
+      <div id="cell_3_水" class="timetable-cell" onclick="openModal('cell_3_水', '', '', '')"></div>
+      <div id="cell_3_木" class="timetable-cell" onclick="openModal('cell_3_木', '', '', '')"></div>
+      <div id="cell_3_金" class="timetable-cell" onclick="openModal('cell_3_金', '', '', '')"></div>
+      <div id="cell_3_土" class="timetable-cell" onclick="openModal('cell_3_土', '', '', '')"></div>
+      
+      <!-- 4限 -->
+      <div class="timetable-time">4限</div>
+      <div id="cell_4_月" class="timetable-cell" onclick="openModal('cell_4_月', '', '', '')"></div>
+      <div id="cell_4_火" class="timetable-cell" onclick="openModal('cell_4_火', '', '', '')"></div>
+      <div id="cell_4_水" class="timetable-cell" onclick="openModal('cell_4_水', '', '', '')"></div>
+      <div id="cell_4_木" class="timetable-cell" onclick="openModal('cell_4_木', '', '', '')"></div>
+      <div id="cell_4_金" class="timetable-cell" onclick="openModal('cell_4_金', '', '', '')"></div>
+      <div id="cell_4_土" class="timetable-cell" onclick="openModal('cell_4_土', '', '', '')"></div>
+      
+      <!-- 5限 -->
+      <div class="timetable-time">5限</div>
+      <div id="cell_5_月" class="timetable-cell" onclick="openModal('cell_5_月', '', '', '')"></div>
+      <div id="cell_5_火" class="timetable-cell" onclick="openModal('cell_5_火', '', '', '')"></div>
+      <div id="cell_5_水" class="timetable-cell" onclick="openModal('cell_5_水', '', '', '')"></div>
+      <div id="cell_5_木" class="timetable-cell" onclick="openModal('cell_5_木', '', '', '')"></div>
+      <div id="cell_5_金" class="timetable-cell" onclick="openModal('cell_5_金', '', '', '')"></div>
+      <div id="cell_5_土" class="timetable-cell" onclick="openModal('cell_5_土', '', '', '')"></div>
+      
+      <!-- 6限 -->
+      <div class="timetable-time">6限</div>
+      <div id="cell_6_月" class="timetable-cell" onclick="openModal('cell_6_月', '', '', '')"></div>
+      <div id="cell_6_火" class="timetable-cell" onclick="openModal('cell_6_火', '', '', '')"></div>
+      <div id="cell_6_水" class="timetable-cell" onclick="openModal('cell_6_水', '', '', '')"></div>
+      <div id="cell_6_木" class="timetable-cell" onclick="openModal('cell_6_木', '', '', '')"></div>
+      <div id="cell_6_金" class="timetable-cell" onclick="openModal('cell_6_金', '', '', '')"></div>
+      <div id="cell_6_土" class="timetable-cell" onclick="openModal('cell_6_土', '', '', '')"></div>
+      
+      <!-- 7限 -->
+      <div class="timetable-time">7限</div>
+      <div id="cell_7_月" class="timetable-cell" onclick="openModal('cell_7_月', '', '', '')"></div>
+      <div id="cell_7_火" class="timetable-cell" onclick="openModal('cell_7_火', '', '', '')"></div>
+      <div id="cell_7_水" class="timetable-cell" onclick="openModal('cell_7_水', '', '', '')"></div>
+      <div id="cell_7_木" class="timetable-cell" onclick="openModal('cell_7_木', '', '', '')"></div>
+      <div id="cell_7_金" class="timetable-cell" onclick="openModal('cell_7_金', '', '', '')"></div>
+      <div id="cell_7_土" class="timetable-cell" onclick="openModal('cell_7_土', '', '', '')"></div>
+    </div>
+    
+    <!-- アクションボタン -->
+    <div class="action-buttons">
+      <button class="btn" onclick="exportTimetable()"><i class="fas fa-download"></i> エクスポート</button>
+      <button class="btn" onclick="printTimetable()"><i class="fas fa-print"></i> 印刷</button>
+      <a href="{{ url_for('dashboard') }}" class="btn btn-outline"><i class="fas fa-arrow-left"></i> ホームに戻る</a>
+    </div>
+  </main>
+  
+  <!-- 編集用モーダル -->
+  <div id="editModal" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="closeModal()">&times;</span>
+      <h2>講義編集</h2>
+      <form id="editForm">
+        <input type="hidden" id="cellId" name="cellId" value="">
+        <label for="lectureName"><i class="fas fa-book"></i> 講義名:</label>
+        <input type="text" id="lectureName" name="lectureName" placeholder="例: プログラミング入門" required>
+        
+        <label for="lectureRoom"><i class="fas fa-map-marker-alt"></i> 教室:</label>
+        <input type="text" id="lectureRoom" name="lectureRoom" placeholder="例: A101" required>
+        
+        <label><i class="fas fa-palette"></i> 色:</label>
+        <div class="color-options">
+          <div class="color-option" data-color="#ff9999" style="background-color: #ff9999;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#ffcc99" style="background-color: #ffcc99;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#ffff99" style="background-color: #ffff99;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#ccffcc" style="background-color: #ccffcc;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#99ccff" style="background-color: #99ccff;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#ccccff" style="background-color: #ccccff;" onclick="selectColor(this)"></div>
+          <div class="color-option" data-color="#ffccff" style="background-color: #ffccff;" onclick="selectColor(this)"></div>
+        </div>
+        <input type="hidden" id="lectureColor" name="lectureColor" value="#ff9999">
+        
+        <div class="button-group">
+          <button type="button" class="cancel-btn" onclick="closeModal()">キャンセル</button>
+          <button type="button" onclick="saveLecture()">保存する</button>
+        </div>
+      </form>
+    </div>
+  </div>
+  
+  <!-- モーダル用スクリプト -->
+  <script>
+    // ハンバーガーメニュー関連の要素
+    const menuIcon = document.getElementById('menuIcon') || document.querySelector('.menu-icon');
+    const sideMenu = document.getElementById('sideMenu');
+    const overlay = document.getElementById('overlay');
+    
+    // メニュー切り替え機能
+    function toggleMenu() {
+      menuIcon.classList.toggle('active');
+      sideMenu.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+    
+    // オーバーレイクリックでメニューを閉じる
+    overlay.addEventListener('click', function() {
+      toggleMenu();
+    });
+    
+    // モーダル関連
+    const modal = document.getElementById('editModal');
+    
+    // モーダルを開く関数
+    function openModal(cellId, currentLecture, currentRoom, currentColor) {
+      console.log("openModal called for cell:", cellId);
+      document.getElementById('cellId').value = cellId;
+      document.getElementById('lectureName').value = currentLecture || "";
+      document.getElementById('lectureRoom').value = currentRoom || "";
+      
+      // 色の選択をリセットしてから、適切な色を選択
+      resetColorSelection();
+      if (currentColor) {
+        document.getElementById('lectureColor').value = currentColor;
+        const colorOption = document.querySelector(`.color-option[data-color="${currentColor}"]`);
+        if (colorOption) {
+          colorOption.classList.add('selected');
+        }
+      } else {
+        document.getElementById('lectureColor').value = "#ff9999";
+        document.querySelector('.color-option[data-color="#ff9999"]').classList.add('selected');
+      }
+      
+      modal.style.display = "block";
+      setTimeout(() => {
+        modal.classList.add('active');
+      }, 10);
+    }
+    
+    // 色選択のリセット
+    function resetColorSelection() {
+      document.querySelectorAll('.color-option').forEach(option => {
+        option.classList.remove('selected');
+      });
+    }
+    
+    // 色の選択
+    function selectColor(element) {
+      resetColorSelection();
+      element.classList.add('selected');
+      document.getElementById('lectureColor').value = element.dataset.color;
+    }
+    
+    // モーダルを閉じる関数
+    function closeModal() {
+      modal.classList.remove('active');
+      setTimeout(() => {
+        modal.style.display = "none";
+      }, 300);
+    }
+    
+    // 編集内容を保存する関数（AJAX送信）
+    function saveLecture() {
+      console.log("saveLecture called");
+      const cellId = document.getElementById('cellId').value;
+      const lectureName = document.getElementById('lectureName').value;
+      const lectureRoom = document.getElementById('lectureRoom').value;
+      const lectureColor = document.getElementById('lectureColor').value;
+      
+      fetch("{{ url_for('update_lecture') }}", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          cellId: cellId,
+          lectureName: lectureName,
+          lectureRoom: lectureRoom,
+          lectureColor: lectureColor
+        })
+      })
+      .then(response => response.json())
+      .then(data => {
+        if(data.success){
+          const cell = document.getElementById(cellId);
+          cell.dataset.lectureName = lectureName;
+          cell.dataset.lectureRoom = lectureRoom;
+          cell.dataset.lectureColor = lectureColor;
+          cell.innerHTML = `
+            <div class="lecture-card" onclick="event.stopPropagation(); openModal('${cellId}', '${lectureName}', '${lectureRoom}', '${lectureColor}')"
+              style="background-color: ${lectureColor}; border-left-color: ${adjustColor(lectureColor)};">
+              <p class="lecture-title">${lectureName}</p>
+              <p class="lecture-room"><i class="fas fa-map-marker-alt"></i> ${lectureRoom}</p>
+            </div>
+          `;
+          
+          // 成功メッセージのトースト表示
+          showToast("講義情報を保存しました", "success");
+          closeModal();
+        } else {
+          showToast("保存に失敗しました", "error");
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        showToast("エラーが発生しました", "error");
+      });
+    }
+    
+    // 色の調整関数（ボーダー用に少し暗くする）
+    function adjustColor(color) {
+      // 16進数カラーコードをRGBに変換
+      const r = parseInt(color.slice(1, 3), 16);
+      const g = parseInt(color.slice(3, 5), 16);
+      const b = parseInt(color.slice(5, 7), 16);
+      
+      // 少し暗くする
+      const darkenFactor = 0.8;
+      const newR = Math.floor(r * darkenFactor);
+      const newG = Math.floor(g * darkenFactor);
+      const newB = Math.floor(b * darkenFactor);
+      
+      // RGBを16進数に戻す
+      return `#${newR.toString(16).padStart(2, '0')}${newG.toString(16).padStart(2, '0')}${newB.toString(16).padStart(2, '0')}`;
+    }
+    
+    // トースト通知
+    function showToast(message, type = "info") {
+      // トースト要素がなければ作成
+      if (!document.getElementById('toast-container')) {
+        const toastContainer = document.createElement('div');
+        toastContainer.id = 'toast-container';
+        toastContainer.style.cssText = `
+          position: fixed;
+          bottom: 20px;
+          right: 20px;
+          z-index: 10000;
+        `;
+        document.body.appendChild(toastContainer);
+      }
+      
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.style.cssText = `
+        padding: 12px 20px;
+        background-color: ${type === 'success' ? '#4caf50' : type === 'error' ? '#f44336' : '#2196f3'};
+        color: white;
+        border-radius: 8px;
+        margin-top: 10px;
+        box-shadow: 0 3px 10px rgba(0,0,0,0.2);
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        transition: all 0.3s ease;
+        transform: translateX(100%);
+        opacity: 0;
+      `;
+      
+      const icon = document.createElement('i');
+      icon.className = `fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}`;
+      icon.style.marginRight = '10px';
+      
+      toast.appendChild(icon);
+      toast.appendChild(document.createTextNode(message));
+      
+      document.getElementById('toast-container').appendChild(toast);
+      
+      // アニメーション
+      setTimeout(() => {
+        toast.style.transform = 'translateX(0)';
+        toast.style.opacity = '1';
+      }, 50);
+      
+      // 自動的に消える
+      setTimeout(() => {
+        toast.style.transform = 'translateX(100%)';
+        toast.style.opacity = '0';
+        setTimeout(() => {
+          toast.remove();
+        }, 300);
+      }, 3000);
+    }
+    
+    // エクスポート機能
+    function exportTimetable() {
+      // 時間割データの収集
+      const timetableData = {};
+      document.querySelectorAll('.timetable-cell').forEach(cell => {
+        if (cell.dataset.lectureName) {
+          timetableData[cell.id] = {
+            name: cell.dataset.lectureName,
+            room: cell.dataset.lectureRoom,
+            color: cell.dataset.lectureColor
+          };
+        }
+      });
+      
+      // JSONデータの作成
+      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(timetableData, null, 2));
+      
+      // ダウンロード用リンクの作成
+      const downloadAnchor = document.createElement('a');
+      downloadAnchor.setAttribute("href", dataStr);
+      downloadAnchor.setAttribute("download", "timetable_export.json");
+      document.body.appendChild(downloadAnchor);
+      downloadAnchor.click();
+      downloadAnchor.remove();
+      
+      showToast("時間割をエクスポートしました", "success");
+    }
+    
+    // 印刷機能
+    function printTimetable() {
+      window.print();
+    }
+    
+    // ページロード時に保存済み講義情報を取得して各セルに反映
+    window.onload = function() {
+      // フェードイン要素のアニメーション
+      const fadeElements = document.querySelectorAll('.fade-in');
+      fadeElements.forEach(element => {
+        element.classList.add('active');
+      });
+      
+      // 現在のページに応じたサイドメニューのハイライト
+      const currentPath = window.location.pathname;
+      const menuLinks = document.querySelectorAll('.side-menu a');
+      
+      menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+          link.style.borderLeft = '3px solid #dd999e';
+        }
+      });
+      
+      // 講義データの読み込み
+      fetch("{{ url_for('get_all_lectures') }}")
+      .then(response => response.json())
+      .then(data => {
+        if(data.success){
+          data.lectures.forEach(function(lecture) {
+            let cell = document.getElementById(lecture.cell_id);
+            if(cell) {
+              cell.dataset.lectureName = lecture.lecture_name;
+              cell.dataset.lectureRoom = lecture.lecture_room;
+              cell.dataset.lectureColor = lecture.lecture_color;
+              cell.innerHTML = `
+                <div class="lecture-card" onclick="event.stopPropagation(); openModal('${lecture.cell_id}', '${lecture.lecture_name}', '${lecture.lecture_room}', '${lecture.lecture_color}')"
+                  style="background-color: ${lecture.lecture_color}; border-left-color: ${adjustColor(lecture.lecture_color)};">
+                  <p class="lecture-title">${lecture.lecture_name}</p>
+                  <p class="lecture-room"><i class="fas fa-map-marker-alt"></i> ${lecture.lecture_room}</p>
+                </div>
+              `;
+            }
+          });
+        }
+      })
+      .catch(error => console.error("Error loading saved lectures:", error));
+    }
+  </script>
+</body>
+</html>

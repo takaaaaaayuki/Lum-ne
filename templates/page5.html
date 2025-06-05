@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ user_campus }}周辺の遊び場所</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        body::before {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.15) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, 30px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        /* ヘッダースタイル */
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(31, 34, 57, 0.95);
+            color: white;
+            height: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .logo:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #dd999e;
+            border-radius: 2px;
+        }
+        
+        /* ハンバーガーメニューアイコン */
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon:hover span:nth-child(1) {
+            transform: translateY(-2px);
+        }
+        
+        .menu-icon:hover span:nth-child(3) {
+            transform: translateY(2px);
+        }
+        
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(9px) rotate(45deg);
+        }
+        
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-9px) rotate(-45deg);
+        }
+        
+        /* 右側メニュー */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+            color: white;
+            padding-top: 60px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .side-menu.active {
+            transform: translateX(0);
+        }
+        
+        .side-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .side-menu li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .side-menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px 15px 35px;
+            font-size: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: #dd999e;
+            border-radius: 50%;
+            transform: translateY(-50%) scale(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:hover {
+            background-color: rgba(221, 153, 158, 0.1);
+            padding-left: 40px;
+        }
+        
+        .side-menu a:hover:before {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        
+        .side-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* 遊び場所紹介ページ専用のスタイル */
+        .entertainment-hero {
+            background: transparent;
+            color: #f2f5f8;
+            text-align: center;
+            padding: 4rem 1rem;
+            margin-bottom: 2rem;
+            position: relative;
+        }
+        
+        .entertainment-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: #f2f5f8;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .entertainment-hero h1:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 60px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .entertainment-hero p {
+            font-size: 1.2rem;
+            max-width: 700px;
+            margin: 1.5rem auto 0;
+            line-height: 1.6;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        .entertainment-container {
+            max-width: 1200px;
+            margin: 0 auto 3rem;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .entertainment-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .filter-section {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .filter-section h2 {
+            margin-bottom: 1.5rem;
+            color: #1f2239;
+            font-weight: 600;
+            font-size: 1.8rem;
+        }
+        
+        .filter-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+        }
+        
+        .filter-btn {
+            background: linear-gradient(135deg, #1f2239, #2a2e4f);
+            color: #f2f5f8;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        .filter-btn:before {
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 8px;
+            font-size: 0.9rem;
+        }
+        
+        .filter-btn[data-category="all"]:before { content: '\f57e'; }
+        .filter-btn[data-category="karaoke"]:before { content: '\f028'; }
+        .filter-btn[data-category="bowling"]:before { content: '\f7e3'; }
+        .filter-btn[data-category="game"]:before { content: '\f11b'; }
+        .filter-btn[data-category="cafe"]:before { content: '\f0f4'; }
+        .filter-btn[data-category="cinema"]:before { content: '\f008'; }
+        .filter-btn[data-category="sports"]:before { content: '\f44b'; }
+        .filter-btn[data-category="izakaya"]:before { content: '\f57b'; }
+        
+        .filter-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
+        }
+        
+        .filter-btn.active {
+            background: linear-gradient(135deg, #dd999e, #c7878c);
+            box-shadow: 0 5px 15px rgba(199, 135, 140, 0.3);
+        }
+        
+        .spots-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        
+        .spot-card {
+            background-color: #fff;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.08);
+            transition: all 0.4s ease;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .spot-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.12);
+        }
+        
+        .spot-image {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+        
+        .spot-image:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(0deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0) 50%);
+            z-index: 1;
+        }
+        
+        .spot-card:hover .spot-image {
+            height: 220px;
+        }
+        
+        .spot-category {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #dd999e, #c7878c);
+            color: #fff;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-weight: 500;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 2;
+            display: flex;
+            align-items: center;
+            font-size: 0.9rem;
+        }
+        
+        .spot-category:before {
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 5px;
+        }
+        
+        .spot-category[data-category="karaoke"]:before { content: '\f028'; }
+        .spot-category[data-category="bowling"]:before { content: '\f7e3'; }
+        .spot-category[data-category="game"]:before { content: '\f11b'; }
+        .spot-category[data-category="cafe"]:before { content: '\f0f4'; }
+        .spot-category[data-category="cinema"]:before { content: '\f008'; }
+        .spot-category[data-category="sports"]:before { content: '\f44b'; }
+        .spot-category[data-category="izakaya"]:before { content: '\f57b'; }
+        
+        .spot-content {
+            padding: 1.5rem;
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .spot-title {
+            font-size: 1.5rem;
+            color: #1f2239;
+            margin-bottom: 0.8rem;
+            font-weight: 700;
+            line-height: 1.3;
+        }
+        
+        .spot-address {
+            color: #666;
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: flex-start;
+        }
+        
+        .spot-address i {
+            margin-right: 0.5rem;
+            color: #dd999e;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        
+        .spot-description {
+            margin-bottom: 1.5rem;
+            line-height: 1.6;
+            color: #444;
+            flex-grow: 1;
+        }
+        
+        .spot-features {
+            margin-bottom: 1.5rem;
+        }
+        
+        .feature-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.6rem;
+        }
+        
+        .feature-tag {
+            background-color: rgba(31, 34, 57, 0.05);
+            color: #1f2239;
+            padding: 0.4rem 0.8rem;
+            border-radius: 30px;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .feature-tag:hover {
+            background-color: rgba(31, 34, 57, 0.1);
+            transform: translateY(-2px);
+        }
+        
+        .feature-tag i {
+            margin-right: 0.4rem;
+            color: #dd999e;
+        }
+        
+        .spot-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .spot-rating {
+            display: flex;
+            align-items: center;
+            color: #1f2239;
+            font-weight: 500;
+        }
+        
+        .spot-rating i {
+            color: #ffb700;
+            margin-right: 0.4rem;
+        }
+        
+        .directions-btn {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #1f2239, #2a2e4f);
+            color: #f2f5f8;
+            padding: 0.6rem 1.2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+        }
+        
+        .directions-btn:hover {
+            background: linear-gradient(135deg, #dd999e, #c7878c);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .directions-btn i {
+            margin-right: 0.5rem;
+        }
+        
+        .section-title {
+            text-align: center;
+            margin-bottom: 2.5rem;
+            color: #1f2239;
+            position: relative;
+            padding-bottom: 1rem;
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .section-title::after {
+            content: "";
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background-color: #dd999e;
+            border-radius: 3px;
+        }
+        
+        .no-spots-message {
+            text-align: center;
+            padding: 3.5rem 2rem;
+            background-color: rgba(240, 242, 245, 0.6);
+            border-radius: 14px;
+            margin: 2rem auto;
+            max-width: 700px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+        }
+        
+        .no-spots-message h3 {
+            color: #1f2239;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        
+        .no-spots-message p {
+            color: #666;
+            margin-bottom: 1.8rem;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .suggest-btn {
+            display: inline-flex;
+            align-items: center;
+            background: linear-gradient(135deg, #dd999e, #c7878c);
+            color: #fff;
+            padding: 0.8rem 2rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(199, 135, 140, 0.3);
+        }
+        
+        .suggest-btn:before {
+            content: '\f015';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 8px;
+        }
+        
+        .suggest-btn:hover {
+            background: linear-gradient(135deg, #c7878c, #b67b7f);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(199, 135, 140, 0.4);
+        }
+        
+        /* スポットタイプごとのスタイル */
+        .spot-card[data-category="karaoke"] .spot-image {
+            background: linear-gradient(45deg, #ffebee, #f8bbd0);
+        }
+        
+        .spot-card[data-category="bowling"] .spot-image {
+            background: linear-gradient(45deg, #e3f2fd, #bbdefb);
+        }
+        
+        .spot-card[data-category="game"] .spot-image {
+            background: linear-gradient(45deg, #e0f7fa, #b2ebf2);
+        }
+        
+        .spot-card[data-category="cafe"] .spot-image {
+            background: linear-gradient(45deg, #fff3e0, #ffe0b2);
+        }
+        
+        .spot-card[data-category="cinema"] .spot-image {
+            background: linear-gradient(45deg, #ede7f6, #d1c4e9);
+        }
+        
+        .spot-card[data-category="sports"] .spot-image {
+            background: linear-gradient(45deg, #e8f5e9, #c8e6c9);
+        }
+        
+        .spot-card[data-category="izakaya"] .spot-image {
+            background: linear-gradient(45deg, #fbe9e7, #ffccbc);
+        }
+        
+        /* カテゴリアイコン */
+        .spot-image:after {
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 4rem;
+            color: rgba(255, 255, 255, 0.7);
+            text-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            z-index: 1;
+        }
+        
+        .spot-card[data-category="karaoke"] .spot-image:after { content: '\f028'; }
+        .spot-card[data-category="bowling"] .spot-image:after { content: '\f7e3'; }
+        .spot-card[data-category="game"] .spot-image:after { content: '\f11b'; }
+        .spot-card[data-category="cafe"] .spot-image:after { content: '\f0f4'; }
+        .spot-card[data-category="cinema"] .spot-image:after { content: '\f008'; }
+        .spot-card[data-category="sports"] .spot-image:after { content: '\f44b'; }
+        .spot-card[data-category="izakaya"] .spot-image:after { content: '\f57b'; }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .spots-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .entertainment-hero h1 {
+                font-size: 2rem;
+            }
+            
+            .entertainment-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .filter-buttons {
+                justify-content: center;
+            }
+            
+            .filter-btn {
+                padding: 0.6rem 1rem;
+                font-size: 0.9rem;
+            }
+            
+            .side-menu {
+                width: 70%;
+            }
+            
+            .spot-card:hover {
+                transform: translateY(-5px) scale(1.01);
+            }
+            
+            .spot-card:hover .spot-image {
+                height: 200px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .entertainment-hero {
+                padding: 3rem 1rem;
+            }
+            
+            .entertainment-hero h1 {
+                font-size: 1.8rem;
+            }
+            
+            .entertainment-hero p {
+                font-size: 1rem;
+            }
+            
+            .section-title {
+                font-size: 1.5rem;
+            }
+            
+            .spot-title {
+                font-size: 1.3rem;
+            }
+            
+            .filter-btn {
+                padding: 0.5rem 0.8rem;
+                font-size: 0.8rem;
+            }
+            
+            .filter-btn:before {
+                margin-right: 5px;
+            }
+            
+            .spot-content {
+                padding: 1.2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダーエリア -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- オーバーレイ -->
+    <div id="overlay" class="overlay"></div>
+
+    <!-- 右側メニュー -->
+    <nav id="sideMenu" class="side-menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+            <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+            <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+            <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+            <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+            <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+            <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+            <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+        </ul>
+    </nav>
+
+    <!-- ヒーローセクション -->
+    <section class="entertainment-hero fade-in">
+        <h1>{{ user_campus }}周辺の遊び場所</h1>
+        <p>新生活を楽しく彩る、{{ user_campus }}周辺のおすすめエンターテイメントスポットをご紹介！授業の合間やリフレッシュしたい時にぜひ訪れてみてください。</p>
+    </section>
+
+    <!-- メインコンテンツ -->
+    <div class="entertainment-container fade-in delay-1">
+        {% if spots %}
+        <!-- フィルターセクション -->
+        <section class="filter-section">
+            <h2>カテゴリから探す</h2>
+            <div class="filter-buttons">
+                <button class="filter-btn active" data-category="all">すべて表示</button>
+                
+                <!-- 存在するカテゴリのみボタン表示 -->
+                {% set categories = spots|map(attribute='category')|list|unique %}
+                
+                {% for category in categories %}
+                    {% if category == 'karaoke' %}
+                    <button class="filter-btn" data-category="karaoke">カラオケ</button>
+                    {% elif category == 'bowling' %}
+                    <button class="filter-btn" data-category="bowling">ボウリング</button>
+                    {% elif category == 'game' %}
+                    <button class="filter-btn" data-category="game">ゲームセンター</button>
+                    {% elif category == 'cafe' %}
+                    <button class="filter-btn" data-category="cafe">カフェ</button>
+                    {% elif category == 'cinema' %}
+                    <button class="filter-btn" data-category="cinema">映画館</button>
+                    {% elif category == 'sports' %}
+                    <button class="filter-btn" data-category="sports">スポーツ施設</button>
+                    {% elif category == 'izakaya' %}
+                    <button class="filter-btn" data-category="izakaya">居酒屋</button>
+                    {% endif %}
+                {% endfor %}
+            </div>
+        </section>
+
+        <!-- おすすめスポット -->
+        <h2 class="section-title">{{ user_campus }}周辺のスポット</h2>
+        <div class="spots-grid">
+            {% for spot in spots %}
+            <div class="spot-card fade-in delay-2" data-category="{{ spot.category }}">
+                <div class="spot-image">
+                    <div class="spot-category" data-category="{{ spot.category }}">
+                        {% if spot.category == 'karaoke' %}カラオケ
+                        {% elif spot.category == 'bowling' %}ボウリング
+                        {% elif spot.category == 'game' %}ゲームセンター
+                        {% elif spot.category == 'cafe' %}カフェ
+                        {% elif spot.category == 'cinema' %}映画館
+                        {% elif spot.category == 'sports' %}スポーツ施設
+                        {% elif spot.category == 'izakaya' %}居酒屋
+                        {% else %}その他{% endif %}
+                    </div>
+                </div>
+                <div class="spot-content">
+                    <h3 class="spot-title">{{ spot.name }}</h3>
+                    <p class="spot-address">
+                        <i class="fas fa-map-marker-alt"></i>
+                        {{ spot.address }}
+                    </p>
+                    <p class="spot-description">
+                        {{ spot.description }}
+                    </p>
+                    <div class="spot-features">
+                        <div class="feature-list">
+                            {% if spot.feature_list %}
+                                {% for feature in spot.feature_list %}
+                                <span class="feature-tag">
+                                    {% if '学割' in feature or '学生' in feature %}
+                                    <i class="fas fa-yen-sign"></i>
+                                    {% elif '24時間' in feature or '深夜' in feature %}
+                                    <i class="fas fa-clock"></i>
+                                    {% elif 'Wi-Fi' in feature %}
+                                    <i class="fas fa-wifi"></i>
+                                    {% elif '団体' in feature %}
+                                    <i class="fas fa-users"></i>
+                                    {% elif '機種' in feature %}
+                                    <i class="fas fa-gamepad"></i>
+                                    {% else %}
+                                    <i class="fas fa-tag"></i>
+                                    {% endif %}
+                                    {{ feature }}
+                                </span>
+                                {% endfor %}
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="spot-footer">
+                        <div class="spot-rating">
+                            <i class="fas fa-star"></i>
+                            {{ spot.rating }}/5.0
+                        </div>
+                        <a href="https://www.google.com/maps/search/{{ spot.address|urlencode }}" target="_blank" class="directions-btn">
+                            <i class="fas fa-directions"></i>
+                            地図で見る
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- スポットがない場合のメッセージ -->
+        <div class="no-spots-message fade-in delay-1">
+            <h3>まだ {{ user_campus }} 周辺のスポット情報がありません</h3>
+            <p>現在、あなたのキャンパス周辺の情報を収集中です。<br>もうしばらくお待ちください。</p>
+            <a href="{{ url_for('dashboard') }}" class="suggest-btn">ホームに戻る</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // ハンバーガーメニュー関連の要素
+        const menuIcon = document.getElementById('menuIcon') || document.querySelector('.menu-icon');
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        // メニュー切り替え機能
+        function toggleMenu() {
+            menuIcon.classList.toggle('active');
+            sideMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        // オーバーレイクリックでメニューを閉じる
+        overlay.addEventListener('click', function() {
+            toggleMenu();
+        });
+
+        // カテゴリフィルター機能
+        document.addEventListener('DOMContentLoaded', function() {
+            // フェードインアニメーション
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(element => {
+                setTimeout(() => {
+                    element.classList.add('active');
+                }, 100);
+            });
+            
+            // 現在のページに応じたサイドメニューのハイライト
+            const currentPath = window.location.pathname;
+            const menuLinks = document.querySelectorAll('.side-menu a');
+            
+            menuLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+                    link.style.borderLeft = '3px solid #dd999e';
+                }
+            });
+        
+            const filterButtons = document.querySelectorAll('.filter-btn');
+            const spotCards = document.querySelectorAll('.spot-card');
+            
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    // アクティブボタンのリセット
+                    filterButtons.forEach(btn => btn.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    const category = this.getAttribute('data-category');
+                    
+                    spotCards.forEach(card => {
+                        if (category === 'all') {
+                            card.style.display = 'flex';
+                            setTimeout(() => {
+                                card.style.opacity = '1';
+                                card.style.transform = 'translateY(0)';
+                            }, 50);
+                        } else {
+                            if (card.getAttribute('data-category') === category) {
+                                card.style.display = 'flex';
+                                setTimeout(() => {
+                                    card.style.opacity = '1';
+                                    card.style.transform = 'translateY(0)';
+                                }, 50);
+                            } else {
+                                card.style.opacity = '0';
+                                card.style.transform = 'translateY(20px)';
+                                setTimeout(() => {
+                                    card.style.display = 'none';
+                                }, 300);
+                            }
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+</body>
+</html>

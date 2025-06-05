@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ログイン</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            overflow-y: auto; /* スクロール可能に */
+            position: relative;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        body::before {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.15) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, 30px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+
+        /* ヘッダー部分（ようこそ） */
+        .hero-login {
+            text-align: center;
+            padding: 4rem 1rem 2rem;
+            background: transparent;
+            position: relative;
+        }
+        
+        .hero-login-content h1 {
+            font-size: 3rem;
+            color: #ffffff;
+            margin: 0 0 1rem;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+            position: relative;
+            display: inline-block;
+            letter-spacing: 2px;
+        }
+        
+        .hero-login-content h1::after {
+            content: '';
+            position: absolute;
+            bottom: -12px;
+            left: 50%;
+            width: 60px;
+            height: 4px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+        
+        .hero-login-content p {
+            font-size: 1.2rem;
+            color: #f2f5f8;
+            margin: 2rem 0;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        /* コンテナ部分（横並び） */        
+        .auth-container {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap; /* モバイル対応 */
+            gap: 2.5rem;
+            max-width: 1000px;
+            margin: 0 auto 3rem;
+            padding: 0 1.5rem;
+            position: relative;
+        }
+        
+        /* ログインフォーム */
+        .login-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+        
+        .login-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #dd999e, #1f2239);
+        }
+        
+        .login-container header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .login-container h2 {
+            color: #1f2239;
+            font-size: 1.8rem;
+            margin: 0 0 0.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .login-container h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            width: 50px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        /* エラーメッセージ */
+        .error-message {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 0.8rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .error-message::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            color: #dc3545;
+        }
+        
+        /* フォーム要素 */
+        .login-container form {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .form-group {
+            margin-bottom: 1.5rem;
+            position: relative;
+        }
+        
+        .login-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #1f2239;
+            font-size: 0.95rem;
+        }
+        
+        .login-container input[type="email"],
+        .login-container input[type="password"] {
+            width: 100%;
+            padding: 0.9rem 0.9rem 0.9rem 2.5rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            margin-bottom: 1.2rem;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .login-container input[type="email"]:focus,
+        .login-container input[type="password"]:focus {
+            border-color: #dd999e;
+            box-shadow: 0 0 0 3px rgba(221, 153, 158, 0.2);
+            outline: none;
+        }
+        
+        .input-icon {
+            position: absolute;
+            top: 2.3rem;
+            left: 0.8rem;
+            color: #aaa;
+            transition: all 0.3s ease;
+        }
+        
+        .login-container input:focus + .input-icon {
+            color: #dd999e;
+        }
+        
+        .login-container input[type="submit"] {
+            padding: 1rem;
+            background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+            color: #ffffff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+            margin-top: 0.5rem;
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .login-container input[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transition: all 0.5s ease;
+        }
+        
+        .login-container input[type="submit"]:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(221, 153, 158, 0.4);
+        }
+        
+        .login-container input[type="submit"]:hover::before {
+            left: 100%;
+        }
+        
+        /* 区切り線 */
+        .login-container hr {
+            margin: 1.5rem 0;
+            border: 0;
+            height: 1px;
+            background: linear-gradient(to right, transparent, rgba(0, 0, 0, 0.1), transparent);
+        }
+        
+        /* リンクエリア */
+        .link-area {
+            text-align: center;
+        }
+        
+        .link-area p {
+            margin-bottom: 1rem;
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        /* 新規登録部分 */
+        .register-area {
+            background-color: rgba(31, 34, 57, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            padding: 2.5rem;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+        }
+        
+        .register-area:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
+        }
+        
+        .register-area::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #1f2239, #dd999e);
+        }
+        
+        .register-area h2 {
+            color: #f2f5f8;
+            font-size: 1.8rem;
+            margin: 0 0 1.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .register-area h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            width: 50px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .register-area p {
+            margin: 1.5rem 0;
+            font-size: 1.1rem;
+            color: #f2f5f8;
+            opacity: 0.9;
+            line-height: 1.6;
+        }
+        
+        .to-register {
+            display: inline-block;
+            background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+            margin-top: 1rem;
+        }
+        
+        .to-register::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transition: all 0.5s ease;
+        }
+        
+        .to-register:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .to-register:hover::before {
+            left: 100%;
+        }
+        
+        /* 装飾アイコン */
+        .decoration-icon {
+            font-size: 3rem;
+            color: rgba(255, 255, 255, 0.2);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 900px) {
+            .auth-container {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .login-container, .register-area {
+                max-width: 100%;
+            }
+            
+            .hero-login {
+                padding: 3rem 1rem 1.5rem;
+            }
+            
+            .hero-login-content h1 {
+                font-size: 2.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヒーローエリア: 上部に大きめのビジュアルや見出しを配置 -->
+    <section class="hero-login">
+        <div class="hero-login-content">
+            <h1>ようこそ！！！</h1>
+            <p>下のフォームからログインしてください</p>
+        </div>
+    </section>
+
+    <!-- ログインと新規登録を横並びに配置 -->
+    <div class="auth-container">
+        <!-- ログインフォーム -->
+        <main class="login-container">
+            <header>
+                <h2>ログイン</h2>
+            </header>
+
+            {% if error %}
+            <p class="error-message">{{ error }}</p>
+            {% endif %}
+
+            <form method="POST">
+                <div class="form-group">
+                    <label>メールアドレス：</label>
+                    <input type="email" name="email" required>
+                    <i class="fas fa-envelope input-icon"></i>
+                </div>
+
+                <div class="form-group">
+                    <label>パスワード：</label>
+                    <input type="password" name="password" required>
+                    <i class="fas fa-lock input-icon"></i>
+                </div>
+
+                <input type="submit" value="ログイン">
+            </form>
+        </main>
+
+        <!-- 新規登録エリア -->
+        <div class="register-area">
+            <i class="fas fa-user-plus decoration-icon"></i>
+            <h2>アカウントをお持ちでない？</h2>
+            <p>まだアカウントをお持ちでないですか！？<br>新規登録で全ての機能を利用できます。</p>
+            <a href="{{ url_for('register') }}" class="to-register">
+                新規登録はこちら
+            </a>
+        </div>
+    </div>
+</body>
+</html>

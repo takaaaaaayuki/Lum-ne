@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ book['title'] }} | Lum!na</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        body::before {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.15) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, 30px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        /* ヘッダースタイル */
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(31, 34, 57, 0.95);
+            color: white;
+            height: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .logo:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #dd999e;
+            border-radius: 2px;
+        }
+        
+        /* ハンバーガーメニューアイコン */
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon:hover span:nth-child(1) {
+            transform: translateY(-2px);
+        }
+        
+        .menu-icon:hover span:nth-child(3) {
+            transform: translateY(2px);
+        }
+        
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(9px) rotate(45deg);
+        }
+        
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-9px) rotate(-45deg);
+        }
+        
+        /* ナビゲーションメニュー */
+        .nav-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+            color: white;
+            padding-top: 60px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .nav-menu.open {
+            transform: translateX(0);
+        }
+        
+        .nav-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-menu li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .nav-menu a {
+            display: flex;
+            align-items: center;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px 15px 35px;
+            font-size: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-menu a:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: #dd999e;
+            border-radius: 50%;
+            transform: translateY(-50%) scale(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-menu a:hover {
+            background-color: rgba(221, 153, 158, 0.1);
+            padding-left: 40px;
+        }
+        
+        .nav-menu a:hover:before {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        
+        /* ヒーローセクション */
+        .hero-dashboard {
+            text-align: center;
+            color: #f2f5f8;
+            padding: 2rem 1rem;
+            position: relative;
+        }
+        
+        .hero-dashboard h1 {
+            font-size: 2.2rem;
+            margin-bottom: 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .hero-dashboard h1:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 60px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        /* 本の詳細コンテナ */
+        .book-detail-container {
+            max-width: 900px;
+            margin: 2rem auto 3rem;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .book-detail-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        /* 本の情報レイアウト */
+        .book-detail-layout {
+            display: grid;
+            grid-template-columns: minmax(280px, 1fr) 2fr;
+            gap: 2rem;
+        }
+        
+        /* 本の画像エリア */
+        .book-image-area {
+            text-align: center;
+            position: relative;
+        }
+        
+        .book-image {
+            max-width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+        }
+        
+        .book-image:hover {
+            transform: scale(1.03);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 本の情報エリア */
+        .book-info-area {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .book-info-item {
+            margin-bottom: 1.2rem;
+            padding-bottom: 1.2rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .book-info-item:last-child {
+            border-bottom: none;
+        }
+        
+        .book-info-label {
+            font-weight: 700;
+            color: #1f2239;
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .book-info-label i {
+            margin-right: 8px;
+            color: #dd999e;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .book-info-content {
+            color: #444;
+            line-height: 1.6;
+            font-size: 1rem;
+        }
+        
+        .book-description {
+            background-color: rgba(240, 242, 245, 0.5);
+            padding: 1.2rem;
+            border-radius: 8px;
+            margin-top: 0.5rem;
+            line-height: 1.8;
+        }
+        
+        /* アクションボタン */
+        .book-actions {
+            margin-top: 2rem;
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .dm-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #dd999e, #c7878c);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(199, 135, 140, 0.3);
+        }
+        
+        .dm-button i {
+            margin-right: 8px;
+        }
+        
+        .dm-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(199, 135, 140, 0.4);
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1f2239, #2a2e4f);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.8rem;
+            border-radius: 30px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            font-size: 1rem;
+            box-shadow: 0 4px 15px rgba(31, 34, 57, 0.2);
+        }
+        
+        .back-button i {
+            margin-right: 8px;
+        }
+        
+        .back-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(31, 34, 57, 0.3);
+        }
+        
+        /* 本のカテゴリバッジ */
+        .category-badge {
+            display: inline-block;
+            background: linear-gradient(135deg, #1f2239, #2a2e4f);
+            color: white;
+            padding: 0.4rem 1rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+            font-weight: 500;
+        }
+        
+        /* 価格表示 */
+        .book-price {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #1f2239;
+            margin-top: 0.5rem;
+        }
+        
+        /* 売り手情報 */
+        .seller-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem;
+            background-color: rgba(240, 242, 245, 0.5);
+            border-radius: 8px;
+            margin-top: 0.5rem;
+        }
+        
+        .seller-avatar {
+            width: 40px;
+            height: 40px;
+            background-color: #dd999e;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 700;
+        }
+        
+        .seller-name {
+            font-weight: 500;
+        }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .book-detail-layout {
+                grid-template-columns: 1fr;
+            }
+            
+            .book-image-area {
+                margin-bottom: 1.5rem;
+            }
+            
+            .hero-dashboard h1 {
+                font-size: 1.8rem;
+            }
+            
+            .book-detail-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+            
+            .book-actions {
+                flex-direction: column;
+            }
+            
+            .dm-button, .back-button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダー部 -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <nav id="navMenu" class="nav-menu">
+            <ul>
+                <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+                <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+                <li><a href="{{ url_for('page3') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+                <li><a href="{{ url_for('page4') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+                <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+                <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 参考書売買</a></li>
+                <li><a href="{{ url_for('booktrade.my_page') }}"><i class="fas fa-user"></i> マイページ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- ヒーローセクション -->
+    <section class="hero-dashboard fade-in">
+        <h1>{{ book['title'] }}</h1>
+    </section>
+
+    <!-- 本の詳細コンテナ -->
+    <div class="book-detail-container fade-in delay-1">
+        <div class="book-detail-layout">
+            <!-- 本の画像エリア -->
+            <div class="book-image-area">
+                {% if book['image'] %}
+                    <img src="{{ url_for('static', filename='images/' ~ book['image']) }}" alt="{{ book['title'] }}" class="book-image">
+                {% else %}
+                    <img src="{{ url_for('static', filename='images/no-image.png') }}" alt="No image" class="book-image">
+                {% endif %}
+            </div>
+            
+            <!-- 本の情報エリア -->
+            <div class="book-info-area">
+                <!-- 著者 -->
+                <div class="book-info-item">
+                    <div class="book-info-label">
+                        <i class="fas fa-user-edit"></i> 著者
+                    </div>
+                    <div class="book-info-content">
+                        {{ book['author'] }}
+                    </div>
+                </div>
+                
+                <!-- カテゴリ -->
+                <div class="book-info-item">
+                    <div class="book-info-label">
+                        <i class="fas fa-tag"></i> カテゴリ
+                    </div>
+                    <div class="book-info-content">
+                        <span class="category-badge">{{ book['category'] }}</span>
+                    </div>
+                </div>
+                
+                <!-- 価格 -->
+                <div class="book-info-item">
+                    <div class="book-info-label">
+                        <i class="fas fa-yen-sign"></i> 価格
+                    </div>
+                    <div class="book-info-content">
+                        <div class="book-price">¥{{ book['price'] }}</div>
+                    </div>
+                </div>
+                
+                <!-- 説明 -->
+                <div class="book-info-item">
+                    <div class="book-info-label">
+                        <i class="fas fa-info-circle"></i> 説明
+                    </div>
+                    <div class="book-info-content">
+                        <div class="book-description">{{ book['description'] }}</div>
+                    </div>
+                </div>
+                
+                <!-- 出品者情報 -->
+                <div class="book-info-item">
+                    <div class="book-info-label">
+                        <i class="fas fa-user"></i> 出品者
+                    </div>
+                    <div class="book-info-content">
+                        <div class="seller-info">
+                            <div class="seller-avatar">
+                                {{ book['seller_id'][:1] }}
+                            </div>
+                            <div class="seller-name">
+                                ID: {{ book['seller_id'] }}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- アクションボタン -->
+        <div class="book-actions fade-in delay-2">
+            <a href="{{ url_for('booktrade.messages', chat_id=book['id']) }}" class="dm-button">
+                <i class="fas fa-comment-dots"></i> DMを送る
+            </a>
+            <a href="{{ url_for('booktrade.book_list') }}" class="back-button">
+                <i class="fas fa-arrow-left"></i> 一覧に戻る
+            </a>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        // メニュー切り替え機能
+        function toggleMenu() {
+            const menuIcon = document.querySelector('.menu-icon');
+            const navMenu = document.getElementById("navMenu");
+            menuIcon.classList.toggle('active');
+            navMenu.classList.toggle("open");
+        }
+        
+        // フェードインアニメーション
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            setTimeout(() => {
+                fadeElements.forEach(element => {
+                    element.classList.add('active');
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>

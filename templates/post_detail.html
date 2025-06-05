@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>投稿詳細 | Lum!na</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        body::before {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.15) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, 30px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        /* ヘッダースタイル */
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(31, 34, 57, 0.95);
+            color: white;
+            height: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .logo:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #dd999e;
+            border-radius: 2px;
+        }
+        
+        /* ナビゲーションメニュー */
+        .nav-menu ul {
+            display: flex;
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .nav-menu li {
+            margin-left: 1.5rem;
+        }
+        
+        .nav-menu a {
+            color: white;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            position: relative;
+            padding-bottom: 5px;
+        }
+        
+        .nav-menu a:hover {
+            color: #dd999e;
+        }
+        
+        .nav-menu a::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #dd999e;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-menu a:hover::after {
+            width: 100%;
+        }
+        
+        /* ハンバーガーメニュー（モバイル用） */
+        .menu-icon {
+            display: none;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+
+        /* メインコンテンツ */
+        .post-detail-container {
+            max-width: 800px;
+            margin: 2rem auto 3rem;
+            padding: 0 1.5rem;
+        }
+        
+        h1 {
+            color: #f2f5f8;
+            font-size: 2.2rem;
+            text-align: center;
+            margin: 1.5rem 0 2rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 60px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        /* 投稿カード */
+        .post {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .post:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .post::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #dd999e, #1f2239);
+        }
+        
+        .post img {
+            width: 100%;
+            max-height: 500px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            margin-bottom: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        
+        .post h2 {
+            color: #1f2239;
+            font-size: 1.8rem;
+            margin: 0 0 1rem;
+            line-height: 1.3;
+        }
+        
+        .post-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .post-author {
+            display: flex;
+            align-items: center;
+            font-weight: 500;
+            color: #555;
+        }
+        
+        .post-author i {
+            margin-right: 8px;
+            color: #dd999e;
+        }
+        
+        .post-time {
+            color: #888;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .post-time i {
+            margin-right: 5px;
+        }
+        
+        /* コメントセクション */
+        .comment-section {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+        
+        .comment-section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .comment-section h3 {
+            color: #1f2239;
+            font-size: 1.4rem;
+            margin: 0 0 1.5rem;
+            position: relative;
+            display: inline-block;
+            padding-bottom: 8px;
+        }
+        
+        .comment-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 40px;
+            height: 3px;
+            background-color: #dd999e;
+            border-radius: 3px;
+        }
+        
+        .comment {
+            padding: 1rem 0;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .comment:last-child {
+            border-bottom: none;
+        }
+        
+        .comment-header {
+            font-weight: 600;
+            color: #1f2239;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+        }
+        
+        .comment-header i {
+            margin-right: 8px;
+            color: #dd999e;
+        }
+        
+        .comment-body {
+            color: #444;
+            line-height: 1.5;
+            margin-bottom: 0.5rem;
+        }
+        
+        .comment-time {
+            font-size: 0.8rem;
+            color: #888;
+            display: flex;
+            align-items: center;
+        }
+        
+        .comment-time i {
+            margin-right: 5px;
+            font-size: 0.8rem;
+        }
+        
+        /* コメント投稿フォーム */
+        .add-comment-form {
+            margin-top: 2rem;
+        }
+        
+        .add-comment-form textarea {
+            width: 100%;
+            padding: 1rem;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            min-height: 100px;
+            font-size: 1rem;
+            resize: vertical;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .add-comment-form textarea:focus {
+            border-color: #dd999e;
+            box-shadow: 0 0 0 3px rgba(221, 153, 158, 0.2);
+            outline: none;
+        }
+        
+        .add-comment-form button {
+            background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .add-comment-form button i {
+            margin-right: 8px;
+        }
+        
+        .add-comment-form button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transition: all 0.5s ease;
+        }
+        
+        .add-comment-form button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(221, 153, 158, 0.4);
+        }
+        
+        .add-comment-form button:hover::before {
+            left: 100%;
+        }
+        
+        /* バッジ */
+        .badge {
+            display: inline-block;
+            padding: 0.3rem 0.7rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            border-radius: 20px;
+            margin-left: 1rem;
+        }
+        
+        .badge-primary {
+            background-color: rgba(221, 153, 158, 0.1);
+            color: #c7878c;
+            border: 1px solid rgba(221, 153, 158, 0.3);
+        }
+        
+        /* ナビゲーションリンク */
+        .navigation-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 2rem;
+        }
+        
+        .back-to-timeline {
+            display: flex;
+            align-items: center;
+            color: #f2f5f8;
+            text-decoration: none;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-to-timeline i {
+            margin-right: 8px;
+        }
+        
+        .back-to-timeline:hover {
+            color: #dd999e;
+            transform: translateX(-3px);
+        }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .nav-menu {
+                display: none;
+            }
+            
+            .menu-icon {
+                display: flex;
+            }
+            
+            .post-detail-container {
+                padding: 0 1rem;
+            }
+            
+            h1 {
+                font-size: 1.8rem;
+            }
+            
+            .post, .comment-section {
+                padding: 1.5rem;
+            }
+            
+            .post h2 {
+                font-size: 1.5rem;
+            }
+            
+            .post-meta {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .post-time {
+                margin-top: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .post, .comment-section {
+                padding: 1.2rem;
+            }
+            
+            .navigation-links {
+                flex-direction: column;
+                gap: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+  <header class="site-header">
+    <div class="logo">Lum!na</div>
+    <nav class="nav-menu">
+      <ul>
+        <li><a href="{{ url_for('dashboard') }}">ホーム</a></li>
+        <li><a href="{{ url_for('timeline') }}">タイムライン</a></li>
+        <li><a href="{{ url_for('timetable') }}">時間割</a></li>
+        <li><a href="{{ url_for('page3') }}">ページ3</a></li>
+        <li><a href="{{ url_for('page4') }}">ページ4</a></li>
+        <li><a href="{{ url_for('page5') }}">ページ5</a></li>
+      </ul>
+    </nav>
+    <!-- モバイル用メニューアイコン（必要に応じて実装） -->
+    <div class="menu-icon">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+  
+  <main class="post-detail-container">
+    <h1 class="fade-in">投稿詳細</h1>
+    
+    <div class="post fade-in delay-1">
+      <img src="{{ url_for('static', filename=post['photo'].split('static/')[-1]) }}" alt="投稿画像">
+      <h2>{{ post['title'] }}</h2>
+      <div class="post-meta">
+        <div class="post-author">
+          <i class="fas fa-user"></i> Anonymous
+          <span class="badge badge-primary">投稿者</span>
+        </div>
+        <div class="post-time">
+          <i class="far fa-clock"></i> {{ post['created_at'] }}
+        </div>
+      </div>
+    </div>
+    
+    <div class="comment-section fade-in delay-2">
+      <h3><i class="fas fa-comments"></i> コメント ({{ comments|length }})</h3>
+      
+      {% if comments %}
+        {% for comment in comments %}
+          <div class="comment">
+            <div class="comment-header">
+              <i class="fas fa-user-circle"></i> Anonymous
+            </div>
+            <div class="comment-body">{{ comment['comment'] }}</div>
+            <div class="comment-time">
+              <i class="far fa-clock"></i> {{ comment['created_at'] }}
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <p>まだコメントはありません。最初のコメントを投稿してみましょう！</p>
+      {% endif %}
+      
+      <form method="POST" class="add-comment-form">
+        <textarea name="comment" placeholder="コメントを入力してください" required></textarea>
+        <button type="submit"><i class="fas fa-paper-plane"></i> コメントを投稿</button>
+      </form>
+    </div>
+    
+    <div class="navigation-links">
+      <a href="{{ url_for('timeline') }}" class="back-to-timeline">
+        <i class="fas fa-arrow-left"></i> タイムラインに戻る
+      </a>
+    </div>
+  </main>
+  
+  <script>
+    // フェードインアニメーション
+    document.addEventListener('DOMContentLoaded', function() {
+      const fadeElements = document.querySelectorAll('.fade-in');
+      setTimeout(() => {
+        fadeElements.forEach(element => {
+          element.classList.add('active');
+        });
+      }, 100);
+      
+      // モバイルメニュー実装（必要に応じて）
+      const menuIcon = document.querySelector('.menu-icon');
+      if (menuIcon) {
+        menuIcon.addEventListener('click', function() {
+          document.querySelector('.nav-menu').classList.toggle('active');
+          this.classList.toggle('active');
+        });
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,423 @@
+/*
+ * 指定の色を基調にしたCSSサンプルです！！！
+ * ピンク: #dd999e
+ * 白: #f2f5f8
+ * 紺: #1f2239
+ */
+
+/* リセット */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* ページ全体の基本設定 */
+body {
+    font-family: "Hiragino Sans", "Helvetica Neue", Arial, sans-serif;
+    /* ▼▼ ここを背景色からグラデーションに変更 ▼▼ */
+    background: linear-gradient(
+        135deg,
+        #1f2239 0%,
+        #dd999e 100%
+    );
+    color: #1f2239;           /* 紺 */
+    line-height: 1.6;
+}
+
+/* 見出しなどで使うアクセントカラー */
+h1, h2 {
+    color: #dd999e; /* ピンク */
+}
+
+/* ==============================
+   ハンバーガーメニュー付きヘッダー
+============================== */
+.site-header {
+    width: 100%;
+    background-color: #1f2239; /* 紺 */
+    color: #f2f5f8;           /* 白 */
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.8rem 1.5rem;
+    position: relative;
+}
+
+/* ロゴ部分 */
+.logo {
+    font-size: 1.4rem;
+    font-weight: bold;
+}
+
+/* メニューアイコン(ハンバーガー) */
+.menu-icon {
+    width: 2rem;
+    height: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    cursor: pointer;
+}
+
+.menu-icon span {
+    display: block;
+    height: 3px;
+    background-color: #f2f5f8; /* 白 */
+    transition: 0.3s;
+}
+
+/* ナビゲーションメニュー */
+.nav-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background-color: #1f2239; /* 紺 */
+    width: 200px;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.4s ease;
+}
+
+.nav-menu.open {
+    max-height: 500px; /* メニューが開いたときの高さ(必要に応じて変更) */
+}
+
+.nav-menu ul {
+    list-style: none;
+}
+
+.nav-menu li a {
+    display: block;
+    color: #f2f5f8; /* 白 */
+    text-decoration: none;
+    padding: 0.8rem 1rem;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+    transition: background-color 0.3s;
+}
+
+.nav-menu li a:hover {
+    background-color: rgba(255,255,255,0.1);
+}
+
+/* ==============================
+   ダッシュボードページ
+============================== */
+/* ヒーロー */
+/* ▼▼ ここで背景を透過または無効化し、bodyのグラデーションが見えるようにする ▼▼ */
+.hero-dashboard {
+    text-align: center;
+    /* もともとのグラデーション指定を削除し、背景を透明に */
+    background: transparent;
+    color: #f2f5f8; /* 文字色は白が映えるために変更 */
+    padding: 4rem 1rem;
+}
+
+.hero-dashboard h1 {
+    font-size: 2.4rem;
+    margin-bottom: 1rem;
+    /* ヒーローセクションのタイトル色を白にする場合は下記を有効化
+       color: #f2f5f8;
+    */
+}
+
+.hero-dashboard p {
+    font-size: 1.2rem;
+    /* 同上で文字色を白にする場合は下記を有効化
+       color: #f2f5f8;
+    */
+}
+
+/* ダッシュボード本体 */
+.dashboard-main {
+    max-width: 900px;
+    margin: 2rem auto;
+    text-align: center;
+    padding: 0 1rem;
+}
+
+.page-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+}
+
+.page-link {
+    text-decoration: none;
+    background-color: #dd999e; /* ピンク */
+    color: #f2f5f8;           /* 白 */
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    transition: 0.3s;
+    font-weight: 600;
+}
+
+.page-link:hover {
+    opacity: 0.8;
+}
+
+/* ==============================
+   ログインページ
+============================== */
+/* ヒーロー(上部ビジュアル) */
+/* ▼▼ ここもbodyのグラデーションを活かすためにtransparentに変更 ▼▼ */
+.hero-login {
+    background: transparent;
+    color: #f2f5f8; /* 白文字 */
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.hero-login-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero-login-content h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    /* 必要に応じて color: #f2f5f8; を指定 */
+}
+
+/* ログインフォーム本体 */
+.login-container {
+    max-width: 500px;
+    margin: 2rem auto;
+    background-color: #ffffff; /* 白 */
+    padding: 2rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    color: #1f2239; /* 文字色は紺 */
+}
+
+.login-container h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+    color: #dd999e; /* ピンク */
+}
+
+.error-message {
+    color: red;
+    margin-bottom: 1rem;
+}
+
+/* 入力フォーム */
+.login-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.login-container label {
+    font-weight: 600;
+}
+
+.login-container input[type="email"],
+.login-container input[type="password"] {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* ログインボタン */
+.login-container input[type="submit"] {
+    background-color: #dd999e; /* ピンク */
+    color: #f2f5f8;           /* 白 */
+    border: none;
+    border-radius: 4px;
+    padding: 0.8rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.login-container input[type="submit"]:hover {
+    opacity: 0.8;
+}
+
+/* 新規登録リンク */
+.link-area {
+    text-align: center;
+    margin-top: 1rem;
+}
+
+.to-register {
+    display: inline-block;
+    background-color: #1f2239; /* 紺 */
+    color: #f2f5f8;           /* 白 */
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    transition: 0.3s;
+}
+
+.to-register:hover {
+    opacity: 0.8;
+}
+
+/* ==============================
+   新規登録ページ
+============================== */
+/* ▼▼ ここもbodyのグラデーションを活かすためにtransparentに変更 ▼▼ */
+.hero-register {
+    background: transparent;
+    color: #f2f5f8; /* 白 */
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.hero-register-content {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.hero-register-content h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    /* 必要に応じて color: #f2f5f8; を指定 */
+}
+
+.register-container {
+    max-width: 600px;
+    margin: 2rem auto;
+    background-color: #ffffff; /* 白 */
+    padding: 2rem;
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    color: #1f2239; /* 文字色は紺 */
+}
+
+.register-container form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.register-container label {
+    font-weight: 600;
+}
+
+.register-container input[type="email"],
+.register-container input[type="password"],
+.register-container input[type="text"],
+.register-container input[type="number"],
+.register-container select {
+    padding: 0.6rem;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+}
+
+/* 登録ボタン */
+.register-container input[type="submit"] {
+    background-color: #dd999e; /* ピンク */
+    color: #f2f5f8;           /* 白 */
+    border: none;
+    border-radius: 4px;
+    padding: 0.8rem;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.register-container input[type="submit"]:hover {
+    opacity: 0.8;
+}
+
+/* ==============================
+   レスポンシブ対応 (例)
+============================== */
+@media (max-width: 768px) {
+    /* ハンバーガーメニュー: 幅が狭い時 */
+    .nav-menu {
+        width: 100%;
+    }
+
+    .hero-dashboard h1 {
+        font-size: 2rem;
+    }
+
+    .dashboard-main {
+        margin: 1rem auto;
+    }
+
+    .page-links {
+        flex-direction: column;
+    }
+}
+
+/* ==============================
+   === TIMETABLE (時間割) ===
+============================== */
+.timetable-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 1rem;
+    background-color: rgba(255, 255, 255, 0.8); /* 白をやや透過させる */
+    border-radius: 6px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    text-align: center;
+    color: #1f2239; /* 紺 */
+}
+
+/* タイトルなどは既にh1, h2にピンクが割り当てられているのでOK */
+.timetable-container p {
+    margin-bottom: 2rem;
+    color: #333;
+}
+
+/* グリッドレイアウトで曜日×時限を配置 */
+.timetable-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr); /* 6列(時限+月火水木金) */
+    gap: 1px; /* グリッドの隙間を1pxに */
+    background-color: #ccc; /* 隙間の色を薄いグレーに */
+}
+
+/* 各セルのスタイル */
+.timetable-grid > div {
+    background-color: #f2f5f8; /* 白ベース */
+    padding: 1rem;
+}
+
+/* ヘッダーセル (曜日部分) */
+.timetable-header {
+    background-color: #dd999e; /* ピンク */
+    color: #f2f5f8;           /* 白 */
+    font-weight: bold;
+}
+
+/* 時限セル */
+.timetable-time {
+    background-color: #dd999e; /* ピンク */
+    color: #f2f5f8;           /* 白 */
+    text-align: center;
+    font-weight: bold;
+}
+
+/* 空きコマなど通常のセル */
+.timetable-cell {
+    min-height: 80px; /* 高さを確保 */
+    position: relative;
+}
+
+/* 講義がある場合に表示するカード */
+.lecture-card {
+    background-color: #fff;
+    color: #1f2239;
+    border-radius: 4px;
+    padding: 0.5rem;
+    text-align: left;
+    box-shadow: 0 1px 5px rgba(0,0,0,0.1);
+}
+
+.lecture-title {
+    font-weight: bold;
+    margin-bottom: 0.2rem;
+}
+
+.lecture-room {
+    font-size: 0.9rem;
+    color: #666;
+}

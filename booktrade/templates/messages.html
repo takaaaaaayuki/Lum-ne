@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>メッセージ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        function toggleMenu() {
+            const navMenu = document.getElementById("navMenu");
+            navMenu.classList.toggle("open");
+        }
+    </script>
+</head>
+<body>
+    <!-- ヘッダー部 -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <nav id="navMenu" class="nav-menu">
+            <ul>
+                <li><a href="{{ url_for('timetable') }}">時間割</a></li>
+                <li><a href="{{ url_for('place') }}">ページ2</a></li>
+                <li><a href="{{ url_for('page3') }}">ページ3</a></li>
+                <li><a href="{{ url_for('page4') }}">ページ4</a></li>
+                <li><a href="{{ url_for('page5') }}">ページ5</a></li>
+                <li><a href="{{ url_for('booktrade.book_list') }}">参考書売買</a></li>
+                <li><a href="{{ url_for('booktrade.my_page') }}">マイページ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero-dashboard">
+        <h1>取引メッセージ</h1>
+    </section>
+
+    <section style="max-width: 600px; margin: 20px auto;">
+        <div class="chat-box" style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px; height: 300px; overflow-y: auto;">
+            {% for msg in messages %}
+            <div class="chat-message" style="margin-bottom: 8px;">
+                <p style="margin: 0;">{{ msg['content'] }}</p>
+                <small style="color: #666;">{{ msg['created_at'] }}</small>
+            </div>
+            {% endfor %}
+        </div>
+        <form method="POST">
+            <textarea name="message" placeholder="メッセージを入力" rows="3" style="width: 100%; margin-bottom: 5px;"></textarea>
+            <button type="submit" style="padding: 8px 16px; background: #ff6666; color: #fff; border: none;">送信</button>
+        </form>
+    </section>
+</body>
+</html>

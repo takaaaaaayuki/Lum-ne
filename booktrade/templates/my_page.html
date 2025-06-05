@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>マイページ</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        function toggleMenu() {
+            const navMenu = document.getElementById("navMenu");
+            navMenu.classList.toggle("open");
+        }
+    </script>
+</head>
+<body>
+    <!-- ヘッダー部 -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <nav id="navMenu" class="nav-menu">
+            <ul>
+                <li><a href="{{ url_for('timetable') }}">時間割</a></li>
+                <li><a href="{{ url_for('place') }}">ページ2</a></li>
+                <li><a href="{{ url_for('page3') }}">ページ3</a></li>
+                <li><a href="{{ url_for('page4') }}">ページ4</a></li>
+                <li><a href="{{ url_for('page5') }}">ページ5</a></li>
+                <li><a href="{{ url_for('booktrade.book_list') }}">参考書売買</a></li>
+                <li><a href="{{ url_for('booktrade.my_page') }}">マイページ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero-dashboard">
+        <h1>マイページ</h1>
+    </section>
+
+    <section style="max-width: 800px; margin: 20px auto;">
+        <h2>出品履歴</h2>
+        <ul>
+            {% for book in books %}
+            <li style="margin-bottom: 10px;">
+                <a href="{{ url_for('booktrade.book_detail', book_id=book['id']) }}">
+                    {{ book['title'] }}
+                </a>
+                <span>({{ book['status'] }})</span>
+            </li>
+            {% endfor %}
+        </ul>
+
+        <h2>メッセージ一覧</h2>
+        <ul>
+            {% for message in messages %}
+            <li style="margin-bottom: 5px;">
+                <p>{{ message['content'] }}</p>
+                <small>{{ message['created_at'] }}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+</body>
+</html>

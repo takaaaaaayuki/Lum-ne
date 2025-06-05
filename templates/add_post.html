@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新規投稿 | Lum!na</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- 追加CSS読み込み -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* 全体のスタイル */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+      background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+      color: #1f2239;
+      min-height: 100vh;
+    }
+    
+    /* ヘッダースタイル */
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: rgba(31, 34, 57, 0.95);
+      color: white;
+      height: 60px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      position: relative;
+      padding-left: 15px;
+      transition: all 0.3s ease;
+    }
+    
+    .logo:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background-color: #dd999e;
+      border-radius: 2px;
+    }
+    
+    /* ハンバーガーメニューアイコン */
+    .menu-icon {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30px;
+      height: 21px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon span {
+      height: 3px;
+      width: 100%;
+      background-color: white;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon:hover span:nth-child(1) {
+      transform: translateY(-2px);
+    }
+    
+    .menu-icon:hover span:nth-child(3) {
+      transform: translateY(2px);
+    }
+    
+    .menu-icon.active span:nth-child(1) {
+      transform: translateY(9px) rotate(45deg);
+    }
+    
+    .menu-icon.active span:nth-child(2) {
+      opacity: 0;
+    }
+    
+    .menu-icon.active span:nth-child(3) {
+      transform: translateY(-9px) rotate(-45deg);
+    }
+    
+    /* 右側メニュー */
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+      color: white;
+      padding-top: 60px;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .side-menu.active {
+      transform: translateX(0);
+    }
+    
+    .side-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .side-menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .side-menu a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 15px 20px 15px 35px;
+      font-size: 1rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      background-color: #dd999e;
+      border-radius: 50%;
+      transform: translateY(-50%) scale(0);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:hover {
+      background-color: rgba(221, 153, 158, 0.1);
+      padding-left: 40px;
+    }
+    
+    .side-menu a:hover:before {
+      transform: translateY(-50%) scale(1);
+      opacity: 1;
+    }
+    
+    .side-menu a i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    /* オーバーレイ */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .overlay.active {
+      display: block;
+      opacity: 1;
+    }
+    
+    /* 新規投稿コンテナ */
+    .add-post-container {
+      max-width: 600px;
+      margin: 3rem auto;
+      padding: 2rem;
+      background-color: rgba(255, 255, 255, 0.95);
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      transform: translateY(0);
+      transition: all 0.3s ease;
+    }
+    
+    .add-post-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+    }
+    
+    .add-post-container h1 {
+      color: #1f2239;
+      font-size: 1.8rem;
+      text-align: center;
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      position: relative;
+      padding-bottom: 1rem;
+    }
+    
+    .add-post-container h1:after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 60px;
+      height: 3px;
+      background-color: #dd999e;
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+    
+    .add-post-container form {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+    
+    .add-post-container label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: #1f2239;
+      font-size: 1rem;
+    }
+    
+    .add-post-container input[type="text"],
+    .add-post-container textarea {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      box-sizing: border-box;
+      font-family: 'Noto Sans JP', sans-serif;
+    }
+    
+    .add-post-container input[type="text"]:focus,
+    .add-post-container textarea:focus {
+      border-color: #dd999e;
+      box-shadow: 0 0 0 3px rgba(221, 153, 158, 0.2);
+      outline: none;
+    }
+    
+    .add-post-container textarea {
+      min-height: 150px;
+      resize: vertical;
+    }
+    
+    /* カスタムファイル選択 */
+    .file-input-container {
+      position: relative;
+      overflow: hidden;
+      display: inline-block;
+      width: 100%;
+    }
+    
+    .file-input-label {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 200px;
+      background-color: #f5f5f5;
+      border: 2px dashed #ddd;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-direction: column;
+    }
+    
+    .file-input-label:hover {
+      background-color: #f0f0f0;
+      border-color: #ccc;
+    }
+    
+    .file-input-label i {
+      font-size: 2.5rem;
+      color: #aaa;
+      margin-bottom: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .file-input-label:hover i {
+      color: #dd999e;
+    }
+    
+    .file-input-text {
+      color: #888;
+      font-size: 1rem;
+    }
+    
+    .file-input-container input[type="file"] {
+      position: absolute;
+      left: 0;
+      top: 0;
+      opacity: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+    }
+    
+    /* 画像プレビュー */
+    .image-preview {
+      width: 100%;
+      margin-top: 1rem;
+      text-align: center;
+      display: none;
+    }
+    
+    .image-preview img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 6px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    /* 投稿ボタン */
+    .submit-btn {
+      padding: 1rem 1.5rem;
+      background-color: #dd999e;
+      color: #f2f5f8;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 1.1rem;
+      transition: all 0.3s ease;
+      margin-top: 1rem;
+      box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .submit-btn i {
+      margin-right: 8px;
+      font-size: 1.2rem;
+    }
+    
+    .submit-btn:hover {
+      background-color: #c7878c;
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(221, 153, 158, 0.4);
+    }
+    
+    /* 戻るリンク */
+    .back-link {
+      display: flex;
+      align-items: center;
+      color: #1f2239;
+      text-decoration: none;
+      font-size: 0.9rem;
+      margin-bottom: 1.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .back-link i {
+      margin-right: 5px;
+    }
+    
+    .back-link:hover {
+      color: #dd999e;
+      transform: translateX(-3px);
+    }
+    
+    /* アニメーション */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .fade-in.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .delay-1 {
+      transition-delay: 0.1s;
+    }
+    
+    .delay-2 {
+      transition-delay: 0.2s;
+    }
+    
+    /* レスポンシブ対応 */
+    @media (max-width: 768px) {
+      .add-post-container {
+        margin: 2rem 1rem;
+        padding: 1.5rem;
+      }
+      
+      .add-post-container h1 {
+        font-size: 1.5rem;
+      }
+      
+      .file-input-label {
+        height: 150px;
+      }
+      
+      .file-input-label i {
+        font-size: 2rem;
+      }
+      
+      .side-menu {
+        width: 70%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="logo">Lum!na</div>
+    <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <!-- オーバーレイ -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- 右側メニュー -->
+  <nav id="sideMenu" class="side-menu">
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+      <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+      <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+      <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+      <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+      <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+      <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+      <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+    </ul>
+  </nav>
+  
+  <!-- メインコンテンツ -->
+  <main class="add-post-container fade-in">
+    <a href="{{ url_for('timeline') }}" class="back-link">
+      <i class="fas fa-arrow-left"></i> タイムラインに戻る
+    </a>
+    
+    <h1><i class="fas fa-pen"></i> 新規投稿</h1>
+    
+    <form method="POST" action="{{ url_for('add_post') }}" enctype="multipart/form-data" id="post-form">
+      <div class="form-group">
+        <label for="title"><i class="fas fa-heading"></i> タイトル:</label>
+        <input type="text" name="title" id="title" placeholder="タイトルを入力してください" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="photo"><i class="fas fa-image"></i> 写真:</label>
+        <div class="file-input-container">
+          <label for="photo" class="file-input-label">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <span class="file-input-text">クリックして写真を選択またはドラッグ&ドロップ</span>
+          </label>
+          <input type="file" name="photo" id="photo" accept="image/*" required>
+        </div>
+        <div id="image-preview" class="image-preview">
+          <img id="preview-img" src="#" alt="プレビュー">
+        </div>
+      </div>
+      
+      <button type="submit" class="submit-btn">
+        <i class="fas fa-paper-plane"></i> 投稿する
+      </button>
+    </form>
+  </main>
+
+  <script>
+    // ハンバーガーメニュー関連の要素
+    const menuIcon = document.getElementById('menuIcon');
+    const sideMenu = document.getElementById('sideMenu');
+    const overlay = document.getElementById('overlay');
+    
+    // メニュー切り替え機能
+    function toggleMenu() {
+      menuIcon.classList.toggle('active');
+      sideMenu.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+    
+    // オーバーレイクリックでメニューを閉じる
+    overlay.addEventListener('click', function() {
+      toggleMenu();
+    });
+    
+    // 画像プレビュー機能
+    const photoInput = document.getElementById('photo');
+    const imagePreview = document.getElementById('image-preview');
+    const previewImg = document.getElementById('preview-img');
+    
+    photoInput.addEventListener('change', function() {
+      const file = this.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          previewImg.src = e.target.result;
+          imagePreview.style.display = 'block';
+        }
+        reader.readAsDataURL(file);
+        
+        // ファイル選択ラベルのテキストを変更
+        const fileInputText = document.querySelector('.file-input-text');
+        fileInputText.textContent = file.name;
+      }
+    });
+    
+    // フォーム送信時の処理
+    document.getElementById('post-form').addEventListener('submit', function(e) {
+      const titleInput = document.getElementById('title');
+      const photoInput = document.getElementById('photo');
+      
+      if (!titleInput.value.trim()) {
+        e.preventDefault();
+        alert('タイトルを入力してください');
+        titleInput.focus();
+        return;
+      }
+      
+      if (!photoInput.files || !photoInput.files[0]) {
+        e.preventDefault();
+        alert('写真を選択してください');
+        return;
+      }
+    });
+    
+    // フェードインアニメーション
+    document.addEventListener('DOMContentLoaded', function() {
+      const fadeElements = document.querySelectorAll('.fade-in');
+      fadeElements.forEach(element => {
+        element.classList.add('active');
+      });
+      
+      // 現在のページに応じたサイドメニューのハイライト
+      const currentPath = window.location.pathname;
+      const menuLinks = document.querySelectorAll('.side-menu a');
+      
+      menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath || 
+            (currentPath.includes('add_post') && link.getAttribute('href').includes('timeline'))) {
+          link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+          link.style.borderLeft = '3px solid #dd999e';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

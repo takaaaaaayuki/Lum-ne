@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>タイムライン | Lum!na</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <!-- 追加CSS読み込み -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* 全体のスタイル */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+      background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+      color: #1f2239;
+      min-height: 100vh;
+    }
+    
+    /* ヘッダースタイル */
+    .site-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background-color: rgba(31, 34, 57, 0.95);
+      color: white;
+      height: 60px;
+      box-sizing: border-box;
+      box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .logo {
+      font-size: 1.5rem;
+      font-weight: bold;
+      position: relative;
+      padding-left: 15px;
+      transition: all 0.3s ease;
+    }
+    
+    .logo:before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      width: 3px;
+      background-color: #dd999e;
+      border-radius: 2px;
+    }
+    
+    /* ハンバーガーメニューアイコン */
+    .menu-icon {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 30px;
+      height: 21px;
+      cursor: pointer;
+      z-index: 1001;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon span {
+      height: 3px;
+      width: 100%;
+      background-color: white;
+      border-radius: 3px;
+      transition: all 0.3s ease;
+    }
+    
+    .menu-icon:hover span:nth-child(1) {
+      transform: translateY(-2px);
+    }
+    
+    .menu-icon:hover span:nth-child(3) {
+      transform: translateY(2px);
+    }
+    
+    .menu-icon.active span:nth-child(1) {
+      transform: translateY(9px) rotate(45deg);
+    }
+    
+    .menu-icon.active span:nth-child(2) {
+      opacity: 0;
+    }
+    
+    .menu-icon.active span:nth-child(3) {
+      transform: translateY(-9px) rotate(-45deg);
+    }
+    
+    /* 右側メニュー */
+    .side-menu {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 250px;
+      height: 100vh;
+      background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+      color: white;
+      padding-top: 60px;
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+    }
+    
+    .side-menu.active {
+      transform: translateX(0);
+    }
+    
+    .side-menu ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    
+    .side-menu li {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    }
+    
+    .side-menu a {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 15px 20px 15px 35px;
+      font-size: 1rem;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:before {
+      content: '';
+      position: absolute;
+      left: 20px;
+      top: 50%;
+      width: 6px;
+      height: 6px;
+      background-color: #dd999e;
+      border-radius: 50%;
+      transform: translateY(-50%) scale(0);
+      opacity: 0;
+      transition: all 0.3s ease;
+    }
+    
+    .side-menu a:hover {
+      background-color: rgba(221, 153, 158, 0.1);
+      padding-left: 40px;
+    }
+    
+    .side-menu a:hover:before {
+      transform: translateY(-50%) scale(1);
+      opacity: 1;
+    }
+    
+    .side-menu a i {
+      margin-right: 10px;
+      width: 20px;
+      text-align: center;
+    }
+    
+    /* オーバーレイ */
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.5);
+      z-index: 999;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .overlay.active {
+      display: block;
+      opacity: 1;
+    }
+
+    /* ページタイトルエリア */
+    .page-title-area {
+      text-align: center;
+      padding: 2rem 1rem;
+      position: relative;
+      margin-bottom: 1rem;
+    }
+    
+    .page-title-area h1 {
+      font-size: 2.2rem;
+      margin: 0 0 0.5rem;
+      color: #f2f5f8;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      position: relative;
+      display: inline-block;
+    }
+    
+    .page-title-area h1:after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      width: 60px;
+      height: 3px;
+      background-color: #dd999e;
+      transform: translateX(-50%);
+      border-radius: 3px;
+    }
+    
+    .page-title-area p {
+      color: #f2f5f8;
+      max-width: 600px;
+      margin: 1rem auto 0;
+      opacity: 0.9;
+      font-size: 1.1rem;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+    }
+
+    /* タイムラインのスタイル */
+    .timeline-container {
+      max-width: 800px;
+      margin: 0 auto 3rem;
+      padding: 0 1.5rem;
+      position: relative;
+    }
+    
+    .masonry-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      grid-gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    
+    .post {
+      border-radius: 12px;
+      background-color: #fff;
+      box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      transition: all 0.3s ease;
+      transform: translateY(0);
+      border: 1px solid rgba(31, 34, 57, 0.05);
+      display: flex;
+      flex-direction: column;
+      break-inside: avoid;
+    }
+    
+    .post:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    }
+    
+    .post-image-container {
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      padding-top: 66.67%; /* 3:2 アスペクト比 */
+    }
+    
+    .post-image-container img {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: all 0.5s ease;
+    }
+    
+    .post:hover .post-image-container img {
+      transform: scale(1.05);
+    }
+    
+    .post-content {
+      padding: 1.2rem;
+    }
+    
+    .post-title {
+      margin: 0 0 0.6rem;
+      font-size: 1.3rem;
+      color: #1f2239;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      line-height: 1.4;
+    }
+    
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 0.8rem;
+      padding-top: 0.8rem;
+      border-top: 1px solid rgba(31, 34, 57, 0.05);
+    }
+    
+    .username {
+      font-weight: 600;
+      font-size: 0.9rem;
+      color: #555;
+      display: flex;
+      align-items: center;
+    }
+    
+    .username i {
+      margin-right: 5px;
+      color: #dd999e;
+    }
+    
+    .post-time {
+      font-size: 0.8rem;
+      color: #888;
+      margin-top: 0.4rem;
+      display: flex;
+      align-items: center;
+    }
+    
+    .post-time i {
+      margin-right: 4px;
+      font-size: 0.8rem;
+    }
+    
+    .post-stats {
+      display: flex;
+      gap: 1rem;
+      font-size: 0.9rem;
+      color: #666;
+    }
+    
+    .post-stats span {
+      display: flex;
+      align-items: center;
+    }
+    
+    .post-stats i {
+      margin-right: 4px;
+      color: #dd999e;
+    }
+    
+    .view-comments {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      background-color: rgba(221, 153, 158, 0.1);
+      color: #dd999e;
+      text-decoration: none;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .view-comments:hover {
+      background-color: rgba(221, 153, 158, 0.2);
+      transform: translateX(3px);
+    }
+    
+    .view-comments i {
+      margin-left: 5px;
+      transition: all 0.3s ease;
+    }
+    
+    .view-comments:hover i {
+      transform: translateX(3px);
+    }
+    
+    .add-post-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 1.5rem auto;
+      padding: 0.8rem 1.5rem;
+      background-color: #dd999e;
+      color: #f2f5f8;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 1rem;
+      box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    
+    .add-post-btn:before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateX(-100%);
+      transition: all 0.3s ease;
+    }
+    
+    .add-post-btn:hover {
+      background-color: #c7878c;
+      transform: translateY(-3px);
+      box-shadow: 0 5px 15px rgba(221, 153, 158, 0.4);
+    }
+    
+    .add-post-btn:hover:before {
+      transform: translateX(0);
+    }
+    
+    .add-post-btn i {
+      margin-right: 8px;
+      font-size: 1.1rem;
+    }
+    
+    .add-post-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 1.5rem;
+    }
+    
+    /* フィルターとソートオプション */
+    .timeline-filters {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 1.5rem;
+      gap: 0.5rem;
+    }
+    
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      background-color: rgba(255, 255, 255, 0.9);
+      border: none;
+      border-radius: 20px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: #1f2239;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .filter-btn:hover, .filter-btn.active {
+      background-color: #dd999e;
+      color: #f2f5f8;
+      box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+    }
+    
+    .filter-btn i {
+      margin-right: 5px;
+    }
+    
+    /* フィードバックメッセージ */
+    .feedback {
+      background-color: rgba(255, 255, 255, 0.9);
+      color: #1f2239;
+      padding: 1rem;
+      border-radius: 8px;
+      text-align: center;
+      margin: 2rem auto;
+      max-width: 400px;
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    }
+    
+    .feedback i {
+      display: block;
+      font-size: 2rem;
+      color: #dd999e;
+      margin-bottom: 0.5rem;
+    }
+    
+    /* ローディングスピナー */
+    .loading-spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(221, 153, 158, 0.2);
+      border-radius: 50%;
+      border-top-color: #dd999e;
+      animation: spin 1s ease-in-out infinite;
+      margin: 20px auto;
+    }
+    
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    
+    /* アニメーション */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    
+    .fade-in.active {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .delay-1 {
+      transition-delay: 0.1s;
+    }
+    
+    .delay-2 {
+      transition-delay: 0.2s;
+    }
+    
+    .delay-3 {
+      transition-delay: 0.3s;
+    }
+    
+    /* レスポンシブデザイン */
+    @media (max-width: 992px) {
+      .masonry-grid {
+        grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .timeline-container {
+        padding: 0 1rem;
+      }
+      
+      .masonry-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .post {
+        margin-bottom: 1.5rem;
+      }
+      
+      .side-menu {
+        width: 70%;
+      }
+      
+      .page-title-area h1 {
+        font-size: 1.8rem;
+      }
+      
+      .timeline-filters {
+        flex-direction: column;
+        align-items: center;
+      }
+      
+      .filter-btn {
+        width: 80%;
+        margin-bottom: 0.5rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ヘッダー -->
+  <header class="site-header">
+    <div class="logo">Lum!na</div>
+    <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+      <span></span>
+      <span></span>
+      <span></span>
+    </div>
+  </header>
+
+  <!-- オーバーレイ -->
+  <div id="overlay" class="overlay"></div>
+
+  <!-- 右側メニュー -->
+  <nav id="sideMenu" class="side-menu">
+    <ul>
+      <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+      <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+      <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+      <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+      <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+      <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+      <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+      <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+    </ul>
+  </nav>
+  
+  <!-- ページタイトルエリア -->
+  <div class="page-title-area fade-in">
+    <h1><i class="fas fa-stream"></i> タイムライン</h1>
+    <p>最新のトレンドや情報をチェックしよう</p>
+  </div>
+  
+  <!-- メインコンテンツ -->
+  <main class="timeline-container fade-in delay-1">
+    <div class="timeline-filters">
+      <button class="filter-btn active"><i class="fas fa-globe"></i> 全て</button>
+      <button class="filter-btn"><i class="fas fa-star"></i> 人気</button>
+      <button class="filter-btn"><i class="fas fa-clock"></i> 最新</button>
+      <button class="filter-btn"><i class="fas fa-user"></i> フォロー中</button>
+    </div>
+    
+    <div class="add-post-container">
+      <a href="{{ url_for('add_post') }}" class="add-post-btn">
+        <i class="fas fa-plus-circle"></i> 新規投稿
+      </a>
+    </div>
+    
+    <div class="masonry-grid">
+      {% for post in posts %}
+      <div class="post fade-in delay-2">
+        <div class="post-image-container">
+          <img src="{{ url_for('static', filename=post['photo'].split('static/')[-1]) }}" alt="{{ post['title'] }}">
+        </div>
+        <div class="post-content">
+          <h2 class="post-title">{{ post['title'] }}</h2>
+          <div class="username">
+            <i class="fas fa-user"></i> ユーザーID: {{ post['user_id'] }}
+          </div>
+          <div class="post-time">
+            <i class="far fa-clock"></i> {{ post['created_at'] }}
+          </div>
+          <div class="post-header">
+            <div class="post-stats">
+              <span><i class="fas fa-heart"></i> {{ post['heart_count'] }}</span>
+              <span><i class="fas fa-comment"></i> {{ post['comment_count'] }}</span>
+            </div>
+          </div>
+          <a href="{{ url_for('post_detail', post_id=post['id']) }}" class="view-comments">
+            コメントを見る <i class="fas fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+      {% endfor %}
+      
+      {% if not posts %}
+      <div class="feedback">
+        <i class="fas fa-info-circle"></i>
+        <p>投稿がまだありません。最初の投稿を作成しましょう！</p>
+      </div>
+      {% endif %}
+    </div>
+  </main>
+
+  <script>
+    // ハンバーガーメニュー関連の要素
+    const menuIcon = document.getElementById('menuIcon') || document.querySelector('.menu-icon');
+    const sideMenu = document.getElementById('sideMenu');
+    const overlay = document.getElementById('overlay');
+    
+    // メニュー切り替え機能
+    function toggleMenu() {
+      menuIcon.classList.toggle('active');
+      sideMenu.classList.toggle('active');
+      overlay.classList.toggle('active');
+    }
+    
+    // オーバーレイクリックでメニューを閉じる
+    overlay.addEventListener('click', function() {
+      toggleMenu();
+    });
+    
+    // フィルターボタンの切り替え
+    document.querySelectorAll('.filter-btn').forEach(button => {
+      button.addEventListener('click', function() {
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+          btn.classList.remove('active');
+        });
+        this.classList.add('active');
+        
+        // ここにフィルタリング機能を実装することができます
+      });
+    });
+    
+    // フェードインアニメーション
+    document.addEventListener('DOMContentLoaded', function() {
+      const fadeElements = document.querySelectorAll('.fade-in');
+      fadeElements.forEach(element => {
+        element.classList.add('active');
+      });
+      
+      // 現在のページに応じたサイドメニューのハイライト
+      const currentPath = window.location.pathname;
+      const menuLinks = document.querySelectorAll('.side-menu a');
+      
+      menuLinks.forEach(link => {
+        if (link.getAttribute('href') === currentPath) {
+          link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+          link.style.borderLeft = '3px solid #dd999e';
+        }
+      });
+    });
+  </script>
+</body>
+</html>

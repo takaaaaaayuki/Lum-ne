@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>本を出品</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script>
+        function toggleMenu() {
+            const navMenu = document.getElementById("navMenu");
+            navMenu.classList.toggle("open");
+        }
+    </script>
+</head>
+<body>
+    <!-- ヘッダー部 -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+        <nav id="navMenu" class="nav-menu">
+            <ul>
+                <li><a href="{{ url_for('timetable') }}">時間割</a></li>
+                <li><a href="{{ url_for('place') }}">ページ2</a></li>
+                <li><a href="{{ url_for('page3') }}">ページ3</a></li>
+                <li><a href="{{ url_for('page4') }}">ページ4</a></li>
+                <li><a href="{{ url_for('page5') }}">ページ5</a></li>
+                <li><a href="{{ url_for('booktrade.book_list') }}">参考書売買</a></li>
+                <li><a href="{{ url_for('booktrade.my_page') }}">マイページ</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <section class="hero-dashboard">
+        <h1>本を出品する</h1>
+    </section>
+
+    <section style="max-width: 600px; margin: 20px auto;">
+        <form method="POST" enctype="multipart/form-data">
+            <div style="margin-bottom: 10px;">
+                <label for="title">タイトル:</label><br>
+                <input type="text" id="title" name="title" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="author">著者:</label><br>
+                <input type="text" id="author" name="author" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="category">カテゴリ:</label><br>
+                <input type="text" id="category" name="category" style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="price">価格:</label><br>
+                <input type="number" id="price" name="price" step="0.01" required style="width: 100%;">
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="description">説明:</label><br>
+                <textarea id="description" name="description" rows="4" style="width: 100%;"></textarea>
+            </div>
+            <div style="margin-bottom: 10px;">
+                <label for="image">画像アップロード:</label><br>
+                <input type="file" id="image" name="image">
+            </div>
+            <button type="submit" style="padding: 8px 16px; background: #ff6666; color: #fff; border: none;">出品する</button>
+        </form>
+    </section>
+</body>
+</html>

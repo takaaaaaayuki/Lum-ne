@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>施設空き状況 | Lum!na</title>
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            overflow-y: auto;
+            position: relative;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            border-radius: 50%;
+            z-index: -1;
+            opacity: 0.5;
+        }
+        
+        body::before {
+            top: -200px;
+            right: -200px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 25s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -200px;
+            left: -200px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.15) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, 30px) rotate(5deg); }
+            100% { transform: translate(0, 0) rotate(0deg); }
+        }
+        
+        /* ヘッダースタイル */
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: rgba(31, 34, 57, 0.95);
+            color: white;
+            height: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            padding-left: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .logo:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #dd999e;
+            border-radius: 2px;
+        }
+        
+        /* ハンバーガーメニューアイコン */
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon:hover span:nth-child(1) {
+            transform: translateY(-2px);
+        }
+        
+        .menu-icon:hover span:nth-child(3) {
+            transform: translateY(2px);
+        }
+        
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(9px) rotate(45deg);
+        }
+        
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-9px) rotate(-45deg);
+        }
+        
+        /* 右側メニュー */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+            color: white;
+            padding-top: 60px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+        }
+        
+        .side-menu.active {
+            transform: translateX(0);
+        }
+        
+        .side-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .side-menu li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .side-menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px 15px 35px;
+            font-size: 1rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: #dd999e;
+            border-radius: 50%;
+            transform: translateY(-50%) scale(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:hover {
+            background-color: rgba(221, 153, 158, 0.1);
+            padding-left: 40px;
+        }
+        
+        .side-menu a:hover:before {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        
+        .side-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+
+        /* ページタイトルエリア */
+        .page-title-area {
+            text-align: center;
+            padding: 2rem 1rem;
+            position: relative;
+            margin-bottom: 1rem;
+        }
+        
+        .page-title-area h1 {
+            font-size: 2.2rem;
+            margin: 0 0 0.5rem;
+            color: #f2f5f8;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .page-title-area h1:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 60px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .page-title-area p {
+            color: #f2f5f8;
+            max-width: 600px;
+            margin: 1rem auto 0;
+            opacity: 0.9;
+            font-size: 1.1rem;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+
+        /* 施設空き状況のスタイル */
+        .content-container {
+            max-width: 800px;
+            margin: 0 auto 3rem;
+            padding: 0 1.5rem;
+        }
+        
+        .status-card {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 2rem;
+            margin-bottom: 2rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+            transform: translateY(0);
+        }
+        
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+        }
+        
+        .auto-update-info {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: #f2f5f8;
+            font-size: 0.9rem;
+            background-color: rgba(31, 34, 57, 0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 0 auto 1.5rem;
+        }
+        
+        .auto-update-info i {
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+            background-color: transparent;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        th {
+            background: linear-gradient(90deg, #1f2239, #2a2e4f);
+            color: white;
+            padding: 1rem;
+            text-align: left;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        th:first-child {
+            border-top-left-radius: 8px;
+        }
+        
+        th:last-child {
+            border-top-right-radius: 8px;
+        }
+        
+        tr:last-child td:first-child {
+            border-bottom-left-radius: 8px;
+        }
+        
+        tr:last-child td:last-child {
+            border-bottom-right-radius: 8px;
+        }
+        
+        td {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        tr:last-child td {
+            border-bottom: none;
+        }
+        
+        tbody tr {
+            background-color: #fff;
+            transition: all 0.3s ease;
+        }
+        
+        tbody tr:hover {
+            background-color: #f9f9f9;
+            transform: scale(1.01);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            z-index: 1;
+            position: relative;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+        
+        .status-available {
+            background-color: rgba(40, 167, 69, 0.1);
+            color: #28a745;
+            border: 1px solid rgba(40, 167, 69, 0.2);
+        }
+        
+        .status-busy {
+            background-color: rgba(220, 53, 69, 0.1);
+            color: #dc3545;
+            border: 1px solid rgba(220, 53, 69, 0.2);
+        }
+        
+        .status-moderate {
+            background-color: rgba(255, 193, 7, 0.1);
+            color: #ffc107;
+            border: 1px solid rgba(255, 193, 7, 0.2);
+        }
+        
+        .update-button-container {
+            text-align: center;
+            margin-top: 2rem;
+        }
+        
+        .update-link {
+            display: inline-block;
+            background: linear-gradient(135deg, #dd999e 0%, #c7878c 100%);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            letter-spacing: 1px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .update-link::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0) 100%);
+            transition: all 0.5s ease;
+        }
+        
+        .update-link:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+        }
+        
+        .update-link:hover::before {
+            left: 100%;
+        }
+        
+        .update-link i {
+            margin-right: 8px;
+        }
+        
+        .timestamp {
+            font-size: 0.85rem;
+            color: #777;
+            display: flex;
+            align-items: center;
+        }
+        
+        .timestamp i {
+            margin-right: 5px;
+            color: #aaa;
+        }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        /* スケルトンローディング */
+        .skeleton-row td {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .skeleton-row td::after {
+            content: "";
+            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 100%;
+            background-color: #e0e0e0;
+            border-radius: 4px;
+            animation: shimmer 1.5s infinite;
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0%,
+                rgba(255, 255, 255, 0.5) 50%,
+                rgba(255, 255, 255, 0) 100%
+            );
+            background-size: 200% 100%;
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .page-title-area h1 {
+                font-size: 1.8rem;
+            }
+            
+            .content-container {
+                padding: 0 1rem;
+            }
+            
+            .status-card {
+                padding: 1.5rem;
+            }
+            
+            table {
+                font-size: 0.9rem;
+            }
+            
+            th, td {
+                padding: 0.8rem;
+            }
+            
+            .side-menu {
+                width: 70%;
+            }
+            
+            .update-link {
+                padding: 0.8rem 1.5rem;
+                font-size: 0.9rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            table {
+                font-size: 0.8rem;
+            }
+            
+            th, td {
+                padding: 0.6rem;
+            }
+            
+            .status-badge {
+                padding: 0.2rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+    </style>
+    <script>
+        async function fetchStatus() {
+            try {
+                const statusTable = document.getElementById('statusTable');
+                
+                // ローディング状態を表示
+                if (statusTable.innerHTML === '') {
+                    const skeletonRows = Array(5).fill().map(() => `
+                        <tr class="skeleton-row">
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                        </tr>
+                    `).join('');
+                    statusTable.innerHTML = skeletonRows;
+                }
+                
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                let tableContent = '';
+                data.forEach(item => {
+                    let statusClass = 'status-moderate';
+                    if (item.status === '空き') {
+                        statusClass = 'status-available';
+                    } else if (item.status === '混雑') {
+                        statusClass = 'status-busy';
+                    }
+                    
+                    tableContent += `
+                        <tr>
+                            <td>${item.facility_name}</td>
+                            <td><span class="status-badge ${statusClass}">${item.status}</span></td>
+                            <td class="timestamp"><i class="far fa-clock"></i> ${item.updated_at}</td>
+                        </tr>
+                    `;
+                });
+                statusTable.innerHTML = tableContent;
+                
+                // 更新時刻を表示
+                const now = new Date();
+                const timeString = now.toLocaleTimeString();
+                document.getElementById('lastUpdated').textContent = timeString;
+            } catch (error) {
+                console.error("データ取得エラー:", error);
+            }
+        }
+
+        setInterval(fetchStatus, 5000);  // 5秒ごとに更新
+        
+        // フェードインアニメーション
+        document.addEventListener('DOMContentLoaded', function() {
+            fetchStatus();
+            
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(element => {
+                element.classList.add('active');
+            });
+            
+            // 現在のページに応じたサイドメニューのハイライト
+            const currentPath = window.location.pathname;
+            const menuLinks = document.querySelectorAll('.side-menu a');
+            
+            menuLinks.forEach(link => {
+                if (link.getAttribute('href') === currentPath) {
+                    link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+                    link.style.borderLeft = '3px solid #dd999e';
+                }
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- ヘッダー -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- オーバーレイ -->
+    <div id="overlay" class="overlay"></div>
+
+    <!-- 右側メニュー -->
+    <nav id="sideMenu" class="side-menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+            <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+            <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+            <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+            <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+            <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+            <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+            <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+        </ul>
+    </nav>
+    
+    <!-- ページタイトルエリア -->
+    <div class="page-title-area fade-in">
+        <h1><i class="fas fa-door-open"></i> 施設空き状況</h1>
+        <p>大学内の施設や自習室の混雑状況をリアルタイムでチェックできます</p>
+    </div>
+    
+    <!-- メインコンテンツ -->
+    <div class="content-container">
+        <div class="status-card fade-in delay-1">
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <span class="auto-update-info">
+                    <i class="fas fa-sync-alt"></i> リアルタイム更新中 (最終更新: <span id="lastUpdated">-</span>)
+                </span>
+            </div>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>施設名</th>
+                        <th>状況</th>
+                        <th>更新日時</th>
+                    </tr>
+                </thead>
+                <tbody id="statusTable">
+                    <!-- JavaScriptで自動挿入 -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="update-button-container fade-in delay-2">
+            <a href="/update" class="update-link">
+                <i class="fas fa-edit"></i> 施設の空き状況を更新する
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // ハンバーガーメニュー関連の要素
+        const menuIcon = document.getElementById('menuIcon') || document.querySelector('.menu-icon');
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        // メニュー切り替え機能
+        function toggleMenu() {
+            menuIcon.classList.toggle('active');
+            sideMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        // オーバーレイクリックでメニューを閉じる
+        overlay.addEventListener('click', function() {
+            toggleMenu();
+        });
+    </script>
+</body>
+</html>

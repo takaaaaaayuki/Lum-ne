@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard</title>
+    <!-- CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background-color: #f5f5f5;
+        }
+        
+        /* ヘッダースタイル */
+        .site-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 1rem;
+            background-color: #1f2239;
+            color: white;
+            height: 60px;
+            box-sizing: border-box;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(31, 34, 57, 0.95);
+        }
+        
+        .logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            transition: all 0.3s ease;
+            padding-left: 10px;
+        }
+        
+        .logo:before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            height: 100%;
+            width: 3px;
+            background-color: #dd999e;
+            border-radius: 2px;
+        }
+        
+        /* ハンバーガーメニューアイコン */
+        .menu-icon {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            width: 30px;
+            height: 21px;
+            cursor: pointer;
+            z-index: 1001;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon span {
+            height: 3px;
+            width: 100%;
+            background-color: white;
+            border-radius: 3px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-icon:hover span:nth-child(1) {
+            transform: translateY(-2px);
+        }
+        
+        .menu-icon:hover span:nth-child(3) {
+            transform: translateY(2px);
+        }
+        
+        .menu-icon.active span:nth-child(1) {
+            transform: translateY(9px) rotate(45deg);
+        }
+        
+        .menu-icon.active span:nth-child(2) {
+            opacity: 0;
+        }
+        
+        .menu-icon.active span:nth-child(3) {
+            transform: translateY(-9px) rotate(-45deg);
+        }
+        
+        /* 右側メニュー */
+        .side-menu {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 250px;
+            height: 100vh;
+            background-color: #1f2239;
+            color: white;
+            padding-top: 60px;
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #1f2239 0%, #2a2e4f 100%);
+        }
+        
+        .side-menu.active {
+            transform: translateX(0);
+        }
+        
+        .side-menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .side-menu li {
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .side-menu a {
+            display: block;
+            color: white;
+            text-decoration: none;
+            padding: 15px 20px;
+            font-size: 1rem;
+            position: relative;
+            padding-left: 35px;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:before {
+            content: '';
+            position: absolute;
+            left: 20px;
+            top: 50%;
+            width: 6px;
+            height: 6px;
+            background-color: #dd999e;
+            border-radius: 50%;
+            transform: translateY(-50%) scale(0);
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+        
+        .side-menu a:hover {
+            background-color: rgba(221, 153, 158, 0.1);
+            padding-left: 40px;
+        }
+        
+        .side-menu a:hover:before {
+            transform: translateY(-50%) scale(1);
+            opacity: 1;
+        }
+        
+        .side-menu a i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        /* オーバーレイ */
+        .overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .overlay.active {
+            display: block;
+            opacity: 1;
+        }
+        
+        /* ダッシュボード専用スタイル */
+        .hero-dashboard {
+            position: relative;
+            overflow: hidden;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.9) 0%, rgba(221, 153, 158, 0.8) 100%), url('/static/images/campus-bg.jpg');
+            background-size: cover;
+            background-position: center;
+            color: #f2f5f8;
+            text-align: center;
+            padding: 8rem 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .hero-dashboard:before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        .hero-dashboard:after {
+            content: '';
+            position: absolute;
+            bottom: -50px;
+            left: -50px;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.2) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 20px); }
+            100% { transform: translate(0, 0); }
+        }
+        
+        .hero-dashboard h1 {
+            font-size: 2.8rem;
+            margin-bottom: 1.5rem;
+            font-weight: bold;
+            position: relative;
+            display: inline-block;
+            text-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+        }
+        
+        .hero-dashboard h1:after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 80px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .hero-dashboard p {
+            font-size: 1.4rem;
+            max-width: 800px;
+            margin: 0 auto;
+            opacity: 0.9;
+            text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+            letter-spacing: 1px;
+            margin-bottom: 2rem;
+        }
+        
+        .hero-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 2rem;
+        }
+        
+        /* ボタンスタイル */
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background-color: #dd999e;
+            color: #fff;
+            border-radius: 4px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .btn:hover {
+            background-color: #c7878c;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 2px solid #dd999e;
+            color: #f2f5f8;
+        }
+        
+        .btn-outline:hover {
+            background-color: #dd999e;
+            color: #fff;
+        }
+        
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 0.9rem;
+        }
+        
+        /* ダッシュボードメニュー */
+        .dashboard-menu {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .menu-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 30px 20px;
+            border-radius: 8px;
+            background-color: #fff;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            text-decoration: none;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .menu-item:before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background-color: #dd999e;
+            transform: translateY(-5px);
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item:hover:before {
+            transform: translateY(0);
+        }
+        
+        .menu-icon-wrapper {
+            width: 60px;
+            height: 60px;
+            background-color: rgba(221, 153, 158, 0.1);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+        }
+        
+        .menu-item:hover .menu-icon-wrapper {
+            background-color: #dd999e;
+        }
+        
+        .menu-item:hover .menu-icon-wrapper i {
+            color: #fff;
+        }
+        
+        .menu-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #1f2239;
+        }
+        
+        .menu-description {
+            font-size: 0.9rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        /* お知らせセクション */
+        .notifications-section {
+            padding: 40px 20px;
+            background-color: #f9f9f9;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .section-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .section-header h2 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #1f2239;
+        }
+        
+        .section-header p {
+            color: #666;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        /* カードスタイル */
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+            overflow: hidden;
+            margin-bottom: 20px;
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            background-color: #1f2239;
+            color: #f2f5f8;
+            padding: 15px 20px;
+            border-bottom: 3px solid #dd999e;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .card-header h3 {
+            margin: 0;
+            font-size: 1.2rem;
+        }
+        
+        .date {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+        
+        .card-body {
+            padding: 20px;
+        }
+        
+        .notification-card .card-body {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        /* フッタースタイル */
+        .site-footer {
+            background-color: #1f2239;
+            color: #f2f5f8;
+            padding: 50px 0 20px;
+        }
+        
+        .footer-content {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            padding: 0 20px;
+        }
+        
+        .footer-logo h2 {
+            margin-top: 0;
+            font-size: 1.5rem;
+            color: #f2f5f8;
+        }
+        
+        .footer-logo p {
+            opacity: 0.8;
+            margin-bottom: 20px;
+        }
+        
+        .footer-links h3, .footer-contact h3 {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            color: #dd999e;
+        }
+        
+        .footer-links ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .footer-links li {
+            margin-bottom: 10px;
+        }
+        
+        .footer-links a {
+            color: #f2f5f8;
+            text-decoration: none;
+            opacity: 0.8;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            opacity: 1;
+            color: #dd999e;
+        }
+        
+        .footer-contact p {
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+        
+        .footer-contact i {
+            margin-right: 10px;
+            color: #dd999e;
+        }
+        
+        .footer-bottom {
+            text-align: center;
+            padding-top: 30px;
+            margin-top: 30px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .footer-bottom p {
+            margin: 0;
+            opacity: 0.6;
+        }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        .delay-3 {
+            transition-delay: 0.3s;
+        }
+        
+        .delay-4 {
+            transition-delay: 0.4s;
+        }
+        
+        .delay-5 {
+            transition-delay: 0.5s;
+        }
+        
+        /* レスポンシブ対応 */
+        @media (max-width: 768px) {
+            .hero-dashboard {
+                padding: 6rem 1rem;
+            }
+            
+            .hero-dashboard h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-dashboard p {
+                font-size: 1.2rem;
+            }
+            
+            .side-menu {
+                width: 70%;
+            }
+            
+            .hero-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .notification-card .card-body {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .notification-card .btn {
+                margin-top: 15px;
+            }
+            
+            .footer-content {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ヘッダーエリア -->
+    <header class="site-header">
+        <div class="logo">Lum!na</div>
+        <div id="menuIcon" class="menu-icon" onclick="toggleMenu()">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+    </header>
+
+    <!-- オーバーレイ -->
+    <div id="overlay" class="overlay"></div>
+
+    <!-- 右側メニュー -->
+    <nav id="sideMenu" class="side-menu">
+        <ul>
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> ホーム</a></li>
+            <li><a href="{{ url_for('timetable') }}"><i class="fas fa-calendar-alt"></i> 時間割</a></li>
+            <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}"><i class="fas fa-comments"></i> 掲示板</a></li>
+            <li><a href="{{ url_for('timeline') }}"><i class="fas fa-stream"></i> タイムライン</a></li>
+            <li><a href="{{ url_for('place') }}"><i class="fas fa-map-marker-alt"></i> 空き状況</a></li>
+            <li><a href="{{ url_for('page5') }}"><i class="fas fa-map"></i> 遊び場所紹介</a></li>
+            <li><a href="{{ url_for('map_page') }}"><i class="fas fa-location-arrow"></i> 位置情報マップ</a></li>
+            <li><a href="{{ url_for('booktrade.book_list') }}"><i class="fas fa-book"></i> 教科書売買</a></li>
+        </ul>
+    </nav>
+
+    <!-- メインビジュアル部分 -->
+    <section class="hero-dashboard">
+        <h1>新入生・新学期・新生活応援サイト</h1>
+        <p>フレッシュなスタートを、もっとおしゃれに、もっと楽しく！</p>
+        <div class="hero-buttons">
+            <a href="{{ url_for('timetable') }}" class="btn">時間割を確認 <i class="fas fa-angle-right"></i></a>
+            <a href="{{ url_for('channel.channel_page', channel_name='1年') }}" class="btn btn-outline">掲示板を見る <i class="fas fa-angle-right"></i></a>
+        </div>
+    </section>
+
+    <!-- ダッシュボードメニュー -->
+    <div class="dashboard-menu">
+        <a href="{{ url_for('timetable') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-calendar-alt fa-lg"></i>
+            </div>
+            <h3 class="menu-title">時間割</h3>
+            <p class="menu-description">授業スケジュールを管理し、必要な準備をサポートします</p>
+        </a>
+        
+        <a href="{{ url_for('channel.channel_page', channel_name='1年') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-comments fa-lg"></i>
+            </div>
+            <h3 class="menu-title">掲示板</h3>
+            <p class="menu-description">仲間とコミュニケーションを取り、情報を共有しましょう</p>
+        </a>
+        
+        <a href="{{ url_for('timeline') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-stream fa-lg"></i>
+            </div>
+            <h3 class="menu-title">タイムライン</h3>
+            <p class="menu-description">最新の情報やイベントをチェックできます</p>
+        </a>
+        
+        <a href="{{ url_for('place') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-map-marker-alt fa-lg"></i>
+            </div>
+            <h3 class="menu-title">空き状況</h3>
+            <p class="menu-description">自習室や施設の空き状況をリアルタイムで確認</p>
+        </a>
+        
+        <a href="{{ url_for('page5') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-map fa-lg"></i>
+            </div>
+            <h3 class="menu-title">遊び場所紹介</h3>
+            <p class="menu-description">キャンパス周辺のおすすめスポットを紹介</p>
+        </a>
+        
+        <a href="{{ url_for('map_page') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-location-arrow fa-lg"></i>
+            </div>
+            <h3 class="menu-title">位置情報マップ</h3>
+            <p class="menu-description">キャンパス内の主要施設を簡単に探せます</p>
+        </a>
+        
+        <a href="{{ url_for('booktrade.book_list') }}" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-book fa-lg"></i>
+            </div>
+            <h3 class="menu-title">教科書売買</h3>
+            <p class="menu-description">教科書の売買や交換ができるマーケットプレイス</p>
+        </a>
+        
+        <a href="#" class="menu-item fade-in">
+            <div class="menu-icon-wrapper">
+                <i class="fas fa-users fa-lg"></i>
+            </div>
+            <h3 class="menu-title">サークル情報</h3>
+            <p class="menu-description">様々なサークルやクラブ活動の情報を閲覧できます</p>
+        </a>
+    </div>
+
+    <!-- お知らせセクション -->
+    <section class="notifications-section">
+        <div class="container">
+            <div class="section-header fade-in">
+                <h2>最新のお知らせ</h2>
+                <p>大学からの重要なお知らせや最新情報をチェックしましょう</p>
+            </div>
+            
+            <div class="card notification-card fade-in">
+                <div class="card-header">
+                    <h3><i class="fas fa-bell"></i> 履修登録期間のお知らせ</h3>
+                    <span class="date">2025/03/20</span>
+                </div>
+                <div class="card-body">
+                    <p>前期の履修登録期間は3月25日〜4月5日までです。期限内に登録を完了してください。</p>
+                    <a href="#" class="btn btn-sm">詳細を見る</a>
+                </div>
+            </div>
+            
+            <div class="card notification-card fade-in">
+                <div class="card-header">
+                    <h3><i class="fas fa-calendar-check"></i> 新入生歓迎会のお知らせ</h3>
+                    <span class="date">2025/03/18</span>
+                </div>
+                <div class="card-body">
+                    <p>4月10日に学生会館で新入生歓迎会を開催します。参加希望の方は事前登録をお願いします。</p>
+                    <a href="#" class="btn btn-sm">詳細を見る</a>
+                </div>
+            </div>
+            
+            <div class="card notification-card fade-in">
+                <div class="card-header">
+                    <h3><i class="fas fa-book-open"></i> 図書館ガイダンスのお知らせ</h3>
+                    <span class="date">2025/03/15</span>
+                </div>
+                <div class="card-body">
+                    <p>4月第1週に図書館利用ガイダンスを実施します。資料検索や電子ジャーナルの使い方を学べます。</p>
+                    <a href="#" class="btn btn-sm">詳細を見る</a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- フッター -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-logo">
+                    <h2>Lum!na</h2>
+                    <p>新生活をもっと充実させるためのサポートサイト</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                        <a href="#"><i class="fab fa-line"></i></a>
+                    </div>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>サイトマップ</h3>
+                    <ul>
+                        <li><a href="{{ url_for('dashboard') }}">ホーム</a></li>
+                        <li><a href="{{ url_for('timetable') }}">時間割</a></li>
+                        <li><a href="{{ url_for('channel.channel_page', channel_name='1年') }}">掲示板</a></li>
+                        <li><a href="{{ url_for('timeline') }}">タイムライン</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-links">
+                    <h3>学生生活</h3>
+                    <ul>
+                        <li><a href="{{ url_for('place') }}">空き状況</a></li>
+                        <li><a href="{{ url_for('page5') }}">遊び場所紹介</a></li>
+                        <li><a href="{{ url_for('booktrade.book_list') }}">教科書売買</a></li>
+                        <li><a href="#">サークル情報</a></li>
+                    </ul>
+                </div>
+                
+                <div class="footer-contact">
+                    <h3>お問い合わせ</h3>
+                    <p><i class="fas fa-envelope"></i> support@newlife.example.jp</p>
+                    <p><i class="fas fa-phone"></i> 03-1234-5678</p>
+                    <p><i class="fas fa-map-marker-alt"></i> 〒100-0001 東京都千代田区1-1</p>
+                </div>
+            </div>
+            
+            <div class="footer-bottom">
+                <p>&copy; 2025 Lum!na. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // ハンバーガーメニュー関連の要素
+        const menuIcon = document.getElementById('menuIcon');
+        const sideMenu = document.getElementById('sideMenu');
+        const overlay = document.getElementById('overlay');
+        
+        // メニュー切り替え機能
+        function toggleMenu() {
+            menuIcon.classList.toggle('active');
+            sideMenu.classList.toggle('active');
+            overlay.classList.toggle('active');
+        }
+        
+        // オーバーレイクリックでメニューを閉じる
+        overlay.addEventListener('click', function() {
+            toggleMenu();
+        });
+
+        // フェードインアニメーション
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            
+            // IntersectionObserverの設定
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('active');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.1
+            });
+            
+            // 各要素を監視対象に追加
+            fadeElements.forEach(element => {
+                observer.observe(element);
+            });
+        });
+        
+        // 現在のページに応じたメニューのハイライト
+        document.addEventListener('DOMContentLoaded', function() {
+            const currentPath = window.location.pathname;
+            const menuLinks = document.querySelectorAll('.side-menu a');
+            
+            menuLinks.forEach(link => {
+                const linkPath = link.getAttribute('href');
+                if (linkPath === currentPath) {
+                    link.style.backgroundColor = 'rgba(221, 153, 158, 0.2)';
+                    link.style.borderLeft = '3px solid #dd999e';
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新規登録 | Lum!na</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <!-- 追加CSS読み込み -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='enhanced-style.css') }}">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        /* 全体のスタイル */
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Noto Sans JP', 'Hiragino Kaku Gothic Pro', 'メイリオ', sans-serif;
+            background: linear-gradient(135deg, rgba(31, 34, 57, 0.95) 0%, rgba(221, 153, 158, 0.85) 100%);
+            color: #1f2239;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景の装飾要素 */
+        body::before, body::after {
+            content: '';
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            z-index: -1;
+        }
+        
+        body::before {
+            top: -150px;
+            right: -150px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0) 70%);
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        body::after {
+            bottom: -150px;
+            left: -150px;
+            background: radial-gradient(circle, rgba(221, 153, 158, 0.2) 0%, rgba(221, 153, 158, 0) 70%);
+            animation: float 20s infinite ease-in-out reverse;
+        }
+        
+        @keyframes float {
+            0% { transform: translate(0, 0); }
+            50% { transform: translate(20px, 20px); }
+            100% { transform: translate(0, 0); }
+        }
+        
+        /* ヒーローエリア */
+        .hero-register {
+            text-align: center;
+            padding: 3rem 1rem 1rem;
+            max-width: 800px;
+            margin: 0 auto 2rem;
+        }
+        
+        .hero-register-content {
+            position: relative;
+        }
+        
+        .hero-register-content h1 {
+            font-size: 2.5rem;
+            color: #ffffff;
+            margin: 0 0 1rem;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+            position: relative;
+            display: inline-block;
+        }
+        
+        .hero-register-content h1::after {
+            content: '';
+            position: absolute;
+            bottom: -10px;
+            left: 50%;
+            width: 80px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        .hero-register-content p {
+            font-size: 1.2rem;
+            color: #f2f5f8;
+            margin: 1.5rem 0;
+            opacity: 0.9;
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 登録フォームコンテナ */
+        .register-container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            width: 90%;
+            max-width: 600px;
+            padding: 2rem;
+            margin: 0 auto 3rem;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            position: relative;
+            overflow: hidden;
+            transform: translateY(0);
+            transition: all 0.3s ease;
+        }
+        
+        .register-container:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.25);
+        }
+        
+        .register-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #dd999e, #1f2239);
+        }
+        
+        .register-container h2 {
+            color: #1f2239;
+            font-size: 1.8rem;
+            text-align: center;
+            margin: 0 0 1.5rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .register-container h2::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 50%;
+            width: 50px;
+            height: 3px;
+            background-color: #dd999e;
+            transform: translateX(-50%);
+            border-radius: 3px;
+        }
+        
+        /* フォーム要素 */
+        .register-container form {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+        
+        .form-group {
+            position: relative;
+        }
+        
+        .form-group.full-width {
+            grid-column: span 2;
+        }
+        
+        .register-container label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: #1f2239;
+            font-size: 0.95rem;
+        }
+        
+        .register-container input[type="email"],
+        .register-container input[type="password"],
+        .register-container input[type="text"],
+        .register-container input[type="number"],
+        .register-container select {
+            width: 100%;
+            padding: 0.9rem 0.9rem 0.9rem 40px;
+            border: 1px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            box-sizing: border-box;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+        
+        .register-container input:focus,
+        .register-container select:focus {
+            border-color: #dd999e;
+            box-shadow: 0 0 0 3px rgba(221, 153, 158, 0.2);
+            outline: none;
+        }
+        
+        .input-icon {
+            position: absolute;
+            top: 38px;
+            left: 12px;
+            color: #aaa;
+            transition: all 0.3s ease;
+        }
+        
+        .register-container input:focus + .input-icon,
+        .register-container select:focus + .input-icon {
+            color: #dd999e;
+        }
+        
+        .register-container input[type="submit"] {
+            grid-column: span 2;
+            padding: 1rem;
+            background-color: #dd999e;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 3px 10px rgba(221, 153, 158, 0.3);
+            margin-top: 1rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .register-container input[type="submit"]::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.1);
+            transform: translateX(-100%);
+            transition: all 0.3s ease;
+        }
+        
+        .register-container input[type="submit"]:hover {
+            background-color: #c7878c;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(221, 153, 158, 0.4);
+        }
+        
+        .register-container input[type="submit"]:hover::before {
+            transform: translateX(0);
+        }
+        
+        /* エラーメッセージ */
+        .error-message {
+            background-color: rgba(220, 53, 69, 0.1);
+            border-left: 4px solid #dc3545;
+            color: #721c24;
+            padding: 0.8rem 1rem;
+            border-radius: 4px;
+            margin-bottom: 1.5rem;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            grid-column: span 2;
+        }
+        
+        .error-message::before {
+            content: '\f071';
+            font-family: 'Font Awesome 6 Free';
+            font-weight: 900;
+            margin-right: 10px;
+            color: #dc3545;
+        }
+        
+        /* フォームセクション */
+        .form-section {
+            margin-bottom: 1.5rem;
+            grid-column: span 2;
+        }
+        
+        .form-section-title {
+            font-size: 1.2rem;
+            color: #1f2239;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #eee;
+            position: relative;
+        }
+        
+        .form-section-title::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            width: 50px;
+            height: 3px;
+            background-color: #dd999e;
+            border-radius: 3px;
+        }
+        
+        /* 戻るリンク */
+        .back-link {
+            display: block;
+            text-align: center;
+            margin-top: 1.5rem;
+            color: #f2f5f8;
+            text-decoration: none;
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+        }
+        
+        .back-link i {
+            margin-right: 5px;
+        }
+        
+        .back-link:hover {
+            color: #dd999e;
+        }
+        
+        /* フッター */
+        .register-footer {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.85rem;
+            margin: 2rem auto;
+            max-width: 600px;
+        }
+        
+        .register-footer a {
+            color: #f2f5f8;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .register-footer a:hover {
+            color: #dd999e;
+        }
+        
+        /* アニメーション */
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.5s ease, transform 0.5s ease;
+        }
+        
+        .fade-in.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        
+        .delay-1 {
+            transition-delay: 0.1s;
+        }
+        
+        .delay-2 {
+            transition-delay: 0.2s;
+        }
+        
+        /* レスポンシブデザイン */
+        @media (max-width: 768px) {
+            .hero-register-content h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-register-content p {
+                font-size: 1rem;
+            }
+            
+            .register-container {
+                width: 85%;
+                padding: 1.5rem;
+            }
+            
+            .register-container form {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-group.full-width,
+            .register-container input[type="submit"],
+            .error-message {
+                grid-column: span 1;
+            }
+        }
+    </style>
+    <script>
+        const faculties = {
+            "武蔵野大学": {
+                "キャンパス": ["有明キャンパス", "武蔵野キャンパス"],
+                "学部": ["グローバル学部", "法学部", "経済学部", "経営学部", "データサイエンス学部", "人間科学部", "工学部", "教育学部", "薬学部", "看護学部", "文学部", "アントレプレナーシップ学部", "ウェルビーイング学部"]
+            },
+            "東京大学": {
+                "キャンパス": ["本郷キャンパス", "弥生キャンパス", "駒場キャンパス"],
+                "学部": ["教養学部", "文学部", "教育学部", "法学部", "経済学部", "理学部", "工学部", "農学部", "薬学部", "医学部"]
+            },
+            "京都大学": {
+                "キャンパス": ["吉田キャンパス", "宇治キャンパス", "桂キャンパス"],
+                "学部": ["総合人間学部", "文学部", "教育学部", "法学部", "経済学部", "理学部", "医学部", "薬学部", "工学部", "農学部"]
+            }
+        };
+
+        function updateOptions() {
+            const uni = document.getElementById("university").value;
+            const facultySelect = document.getElementById("faculty");
+            const campusSelect = document.getElementById("campus");
+
+            facultySelect.innerHTML = "";
+            campusSelect.innerHTML = "";
+            
+            // デフォルトの選択肢を追加
+            const defaultFaculty = document.createElement("option");
+            defaultFaculty.value = "";
+            defaultFaculty.innerText = "選択してください";
+            facultySelect.appendChild(defaultFaculty);
+            
+            const defaultCampus = document.createElement("option");
+            defaultCampus.value = "";
+            defaultCampus.innerText = "選択してください";
+            campusSelect.appendChild(defaultCampus);
+
+            if (faculties[uni]) {
+                faculties[uni]["学部"].forEach(f => {
+                    const opt = document.createElement("option");
+                    opt.value = f;
+                    opt.innerText = f;
+                    facultySelect.appendChild(opt);
+                });
+
+                faculties[uni]["キャンパス"].forEach(c => {
+                    const opt = document.createElement("option");
+                    opt.value = c;
+                    opt.innerText = c;
+                    campusSelect.appendChild(opt);
+                });
+            }
+        }
+        
+        // フェードインアニメーション
+        document.addEventListener('DOMContentLoaded', function() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach(element => {
+                element.classList.add('active');
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- ヒーローエリア -->
+    <section class="hero-register fade-in">
+        <div class="hero-register-content">
+            <h1>新規登録</h1>
+            <p>アカウントを作成して、Lum!naの機能を全て利用しましょう</p>
+        </div>
+    </section>
+
+    <!-- 登録フォーム -->
+    <main class="register-container fade-in delay-1">
+        {% if error %}
+        <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
+        <form method="POST">
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="fas fa-user"></i> アカウント情報</h3>
+            </div>
+            
+            <div class="form-group full-width">
+                <label for="email">メールアドレス：</label>
+                <input type="email" id="email" name="email" placeholder="university@example.com" required>
+                <i class="fas fa-envelope input-icon"></i>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="password">パスワード：</label>
+                <input type="password" id="password" name="password" placeholder="8文字以上の英数字" required>
+                <i class="fas fa-lock input-icon"></i>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="fas fa-id-card"></i> 個人情報</h3>
+            </div>
+
+            <div class="form-group full-width">
+                <label for="full_name">本名：</label>
+                <input type="text" id="full_name" name="full_name" placeholder="例: 山田 太郎" required>
+                <i class="fas fa-user input-icon"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="age">年齢：</label>
+                <input type="number" id="age" name="age" placeholder="例: 18" min="15" max="100">
+                <i class="fas fa-birthday-cake input-icon"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="gender">性別：</label>
+                <select id="gender" name="gender">
+                    <option value="">選択してください</option>
+                    <option value="男性">男性</option>
+                    <option value="女性">女性</option>
+                    <option value="その他">その他</option>
+                    <option value="回答しない">回答しない</option>
+                </select>
+                <i class="fas fa-venus-mars input-icon"></i>
+            </div>
+            
+            <div class="form-group">
+                <label for="grade">学年：</label>
+                <select id="grade" name="grade">
+                    <option value="">選択してください</option>
+                    <option value="1年">1年</option>
+                    <option value="2年">2年</option>
+                    <option value="3年">3年</option>
+                    <option value="4年">4年</option>
+                    <option value="修士1年">修士1年</option>
+                    <option value="修士2年">修士2年</option>
+                    <option value="博士">博士</option>
+                </select>
+                <i class="fas fa-graduation-cap input-icon"></i>
+            </div>
+            
+            <div class="form-section">
+                <h3 class="form-section-title"><i class="fas fa-university"></i> 大学情報</h3>
+            </div>
+
+            <div class="form-group">
+                <label for="university">大学：</label>
+                <select name="university" id="university" onchange="updateOptions()" required>
+                    <option value="">選択してください</option>
+                    <option value="武蔵野大学">武蔵野大学</option>
+                    <option value="東京大学">東京大学</option>
+                    <option value="京都大学">京都大学</option>
+                </select>
+                <i class="fas fa-university input-icon"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="faculty">学部：</label>
+                <select name="faculty" id="faculty" required>
+                    <option value="">選択してください</option>
+                </select>
+                <i class="fas fa-book input-icon"></i>
+            </div>
+
+            <div class="form-group">
+                <label for="campus">キャンパス：</label>
+                <select name="campus" id="campus" required>
+                    <option value="">選択してください</option>
+                </select>
+                <i class="fas fa-map-marker-alt input-icon"></i>
+            </div>
+
+            <input type="submit" value="登録する">
+        </form>
+    </main>
+    
+    <a href="{{ url_for('login') }}" class="back-link fade-in delay-2">
+        <i class="fas fa-arrow-left"></i> ログイン画面に戻る
+    </a>
+    
+    <footer class="register-footer fade-in delay-2">
+        <p>登録することで、<a href="#">利用規約</a>および<a href="#">プライバシーポリシー</a>に同意したことになります。</p>
+        <p>&copy; 2025 Lum!na. All rights reserved.</p>
+    </footer>
+</body>
+</html>
